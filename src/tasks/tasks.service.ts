@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { routineTasks } from "../db/schema";
 import { taskFromRow, toTaskValues } from "../shared/life-os.mapper";
@@ -10,19 +10,19 @@ import type { RoutineStatus, RoutineTask } from "./tasks.types";
 export class TasksService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async findAll() {
-    const rows = await this.db.select().from(routineTasks).orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt));
+  async findAll(userId: string) {
+    const rows = await this.db.select().from(routineTasks).where(eq(routineTasks.userId, userId)).orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt));
     return rows.map(taskFromRow);
   }
 
-  async create(payload: Omit<RoutineTask, "id">) {
+  async create(userId: string, payload: Omit<RoutineTask, "id">) {
     const task = normalizeTask(createId("task"), payload);
-    const [row] = await this.db.insert(routineTasks).values(toTaskValues(task)).returning();
+    const [row] = await this.db.insert(routineTasks).values({ ...toTaskValues(task), userId }).returning();
     return taskFromRow(row);
   }
 
-  async update(taskId: string, payload: Partial<RoutineTask>) {
-    const current = await this.db.query.routineTasks.findFirst({ where: eq(routineTasks.id, taskId) });
+  async update(userId: string, taskId: string, payload: Partial<RoutineTask>) {
+    const current = await this.db.query.routineTasks.findFirst({ where: and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)) });
     if (!current) {
       throw new NotFoundException("Routine task was not found.");
     }
@@ -46,32 +46,32 @@ export class TasksService {
       ...payload,
     });
 
-    const [row] = await this.db.update(routineTasks).set(toTaskValues(task)).where(eq(routineTasks.id, taskId)).returning();
+    const [row] = await this.db.update(routineTasks).set(toTaskValues(task)).where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId))).returning();
     return taskFromRow(row);
   }
 
-  updateStatus(taskId: string, status: RoutineStatus) {
-    return this.update(taskId, {
+  updateStatus(userId: string, taskId: string, status: RoutineStatus) {
+    return this.update(userId, taskId, {
       status,
       completedAt: status === "completed" ? new Date().toISOString() : undefined,
     });
   }
 
-  async reorder(orderedTaskIds: string[]) {
+  async reorder(userId: string, orderedTaskIds: string[]) {
     await this.db.transaction(async (tx) => {
       for (const [index, taskId] of orderedTaskIds.entries()) {
         await tx
           .update(routineTasks)
           .set({ sortOrder: index + 1, updatedAt: new Date() })
-          .where(eq(routineTasks.id, taskId));
+          .where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)));
       }
     });
 
-    return this.findAll();
+    return this.findAll(userId);
   }
 
-  async remove(taskId: string) {
-    await this.db.delete(routineTasks).where(eq(routineTasks.id, taskId));
+  async remove(userId: string, taskId: string) {
+    await this.db.delete(routineTasks).where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)));
     return { id: taskId };
   }
 }

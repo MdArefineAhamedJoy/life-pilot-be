@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { asc, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { budgetCategories, expenses } from "../db/schema";
 import { categoryFromRow, toCategoryValues } from "../shared/life-os.mapper";
@@ -10,19 +10,19 @@ import type { BudgetCategory } from "./categories.types";
 export class CategoriesService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async findAll() {
-    const rows = await this.db.select().from(budgetCategories).orderBy(asc(budgetCategories.createdAt));
+  async findAll(userId: string) {
+    const rows = await this.db.select().from(budgetCategories).where(eq(budgetCategories.userId, userId)).orderBy(asc(budgetCategories.createdAt));
     return rows.map(categoryFromRow);
   }
 
-  async create(payload: Omit<BudgetCategory, "id">) {
+  async create(userId: string, payload: Omit<BudgetCategory, "id">) {
     const category = normalizeCategory(createId("cat"), payload);
-    const [row] = await this.db.insert(budgetCategories).values(toCategoryValues(category)).returning();
+    const [row] = await this.db.insert(budgetCategories).values({ ...toCategoryValues(category), userId }).returning();
     return categoryFromRow(row);
   }
 
-  async update(categoryId: string, payload: Partial<BudgetCategory>) {
-    const current = await this.db.query.budgetCategories.findFirst({ where: eq(budgetCategories.id, categoryId) });
+  async update(userId: string, categoryId: string, payload: Partial<BudgetCategory>) {
+    const current = await this.db.query.budgetCategories.findFirst({ where: and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)) });
     if (!current) {
       throw new NotFoundException("Budget category was not found.");
     }
@@ -49,21 +49,21 @@ export class CategoriesService {
     const [row] = await this.db
       .update(budgetCategories)
       .set(toCategoryValues(nextCategory))
-      .where(eq(budgetCategories.id, categoryId))
+      .where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)))
       .returning();
 
     if (previousName !== nextCategory.name) {
-      await this.db.update(expenses).set({ category: nextCategory.name }).where(eq(expenses.category, previousName));
+      await this.db.update(expenses).set({ category: nextCategory.name }).where(and(eq(expenses.category, previousName), eq(expenses.userId, userId)));
     }
 
     return categoryFromRow(row);
   }
 
-  async updateLimit(categoryId: string, monthlyLimit: unknown) {
+  async updateLimit(userId: string, categoryId: string, monthlyLimit: unknown) {
     const [row] = await this.db
       .update(budgetCategories)
       .set({ monthlyLimit: numberValue(monthlyLimit), updatedAt: new Date() })
-      .where(eq(budgetCategories.id, categoryId))
+      .where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)))
       .returning();
 
     if (!row) {
@@ -73,8 +73,8 @@ export class CategoriesService {
     return categoryFromRow(row);
   }
 
-  async remove(categoryId: string) {
-    await this.db.delete(budgetCategories).where(eq(budgetCategories.id, categoryId));
+  async remove(userId: string, categoryId: string) {
+    await this.db.delete(budgetCategories).where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)));
     return { id: categoryId };
   }
 }

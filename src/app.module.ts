@@ -1,7 +1,9 @@
 import { Module } from "@nestjs/common";
+import { APP_GUARD } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { AccountsModule } from "./accounts/accounts.module";
 import { AuthModule } from "./auth/auth.module";
+import { AuthGuard } from "./auth/auth.guard";
 import { CategoriesModule } from "./categories/categories.module";
 import { DatabaseModule } from "./db/database.module";
 import { ExpensesModule } from "./expenses/expenses.module";
@@ -30,5 +32,6 @@ import { TimerSessionsModule } from "./timer-sessions/timer-sessions.module";
     NotesModule,
     SettingsModule,
   ],
+  providers: [{ provide: APP_GUARD, useExisting: AuthGuard }],
 })
 export class AppModule {}

@@ -77,6 +77,7 @@ export const passwordRecoveryRequests = pgTable("password_recovery_requests", {
 
 export const budgetCategories = pgTable("budget_categories", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id"),
   name: text("name").notNull(),
   type: budgetCategoryType("type").default("monthly").notNull(),
   monthlyLimit: doublePrecision("monthly_limit").notNull(),
@@ -96,6 +97,7 @@ export const budgetCategories = pgTable("budget_categories", {
 
 export const expenses = pgTable("expenses", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id"),
   date: text("date").notNull(),
   itemName: text("item_name").notNull(),
   category: text("category").notNull(),
@@ -111,6 +113,7 @@ export const expenses = pgTable("expenses", {
 
 export const routineTasks = pgTable("routine_tasks", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id"),
   title: text("title").notNull(),
   category: text("category").notNull(),
   priority: routinePriority("priority").default("medium").notNull(),
@@ -131,6 +134,7 @@ export const routineTasks = pgTable("routine_tasks", {
 
 export const timerSessions = pgTable("timer_sessions", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id"),
   taskId: text("task_id"),
   title: text("title").notNull(),
   category: text("category").notNull(),
@@ -141,6 +145,7 @@ export const timerSessions = pgTable("timer_sessions", {
 
 export const lifeNotes = pgTable("life_notes", {
   id: text("id").primaryKey(),
+  userId: uuid("user_id"),
   title: text("title").notNull(),
   body: text("body").notNull(),
   tags: jsonb("tags").$type<string[]>().default(sql`'[]'::jsonb`).notNull(),

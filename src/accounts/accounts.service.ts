@@ -5,8 +5,6 @@ import { accountProfiles, passwordRecoveryRequests } from "../db/schema";
 import { DRIZZLE, type Database } from "../db/database.module";
 import type { ProfilePayload, RecoveryPayload } from "./accounts.types";
 
-const defaultEmail = "mdarefine05@gmail.com";
-
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -21,7 +19,7 @@ function assertEmail(email: string) {
 export class AccountsService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async getProfile(email = defaultEmail) {
+  async getProfile(email: string) {
     const cleanEmail = cleanText(email);
     assertEmail(cleanEmail);
 
@@ -36,21 +34,21 @@ export class AccountsService {
     return profile;
   }
 
-  async saveProfile(payload: ProfilePayload) {
+  async saveProfile(email: string, payload: ProfilePayload) {
     const name = cleanText(payload.name);
-    const email = cleanText(payload.email);
+    const profileEmail = cleanText(email).toLowerCase();
 
     if (!name) {
       throw new BadRequestException("Name is required.");
     }
 
-    assertEmail(email);
+    assertEmail(profileEmail);
 
     const [profile] = await this.db
       .insert(accountProfiles)
       .values({
         name,
-        email,
+        email: profileEmail,
         phone: cleanText(payload.phone) || null,
         location: cleanText(payload.location) || null,
         role: cleanText(payload.role) || null,
@@ -90,12 +88,7 @@ export class AccountsService {
       })
       .returning();
 
-    return {
-      id: request.id,
-      email: request.email,
-      status: request.status,
-      expiresAt: request.expiresAt,
-      token,
-    };
+    // Email delivery is not configured yet. Never expose a recovery token in an API response.
+    return { ok: true, expiresAt: request.expiresAt };
   }
 }

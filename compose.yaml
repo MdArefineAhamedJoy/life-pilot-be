@@ -2,11 +2,11 @@ services:
   postgres:
     image: postgres:16-alpine
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - "${POSTGRES_PORT:-5433}:5432"
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-life_os_ai}
-      POSTGRES_USER: ${POSTGRES_USER:-life_os_ai}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-life_os_ai}
+      POSTGRES_DB: ${DATABASE_NAME:-life-pilot}
+      POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-change-me}
     volumes:
       - postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -14,6 +14,26 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  api:
+    build: .
+    ports:
+      - "${API_PORT:-4000}:4000"
+    environment:
+      DATABASE_CLIENT: postgres
+      DATABASE_HOST: postgres
+      DATABASE_PORT: 5432
+      DATABASE_NAME: ${DATABASE_NAME:-life-pilot}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-change-me}
+      DATABASE_SSL: "false"
+      API_PORT: 4000
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: sh -c "pnpm db:migrate && pnpm start"
     restart: unless-stopped
 
 volumes:

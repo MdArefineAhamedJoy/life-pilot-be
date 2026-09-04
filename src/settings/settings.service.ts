@@ -2,7 +2,7 @@ import { Inject, Injectable } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { lifeSettings } from "../db/schema";
-import { defaultState, settingsId } from "../shared/life-os.defaults";
+import { defaultState } from "../shared/life-os.defaults";
 import { settingsFromRow, toSettingsValues } from "../shared/life-os.mapper";
 import { normalizeSettings } from "../shared/life-os.validation";
 import type { LifeSettings } from "./settings.types";
@@ -11,20 +11,21 @@ import type { LifeSettings } from "./settings.types";
 export class SettingsService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async find() {
-    const settings = await this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, settingsId) });
+  async find(userId: string) {
+    const settings = await this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) });
     return settings ? settingsFromRow(settings) : defaultState.settings;
   }
 
-  async update(payload: Partial<LifeSettings>) {
-    const current = await this.find();
+  async update(userId: string, payload: Partial<LifeSettings>) {
+    const current = await this.find(userId);
     const settings = normalizeSettings({ ...current, ...payload });
+    const { id: _settingsId, ...settingsValues } = toSettingsValues(settings);
     const [row] = await this.db
       .insert(lifeSettings)
-      .values(toSettingsValues(settings))
+      .values({ ...settingsValues, id: userId })
       .onConflictDoUpdate({
         target: lifeSettings.id,
-        set: toSettingsValues(settings),
+        set: settingsValues,
       })
       .returning();
 
