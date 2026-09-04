@@ -1,4 +1,4 @@
-import type { LifeOsState } from "./life-os.types";
+import type { LifeOsState } from "../life-os-state/life-os-state.types";
 
 export const settingsId = "default";
 

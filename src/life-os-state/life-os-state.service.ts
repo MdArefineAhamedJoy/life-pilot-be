@@ -1,14 +1,12 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { asc, desc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import {
-  budgetCategories,
-  expenses,
-  lifeNotes,
-  lifeSettings,
-  routineTasks,
-  timerSessions,
-} from "../db/schema";
+import { budgetCategories } from "../categories/categories.schema";
+import { expenses } from "../expenses/expenses.schema";
+import { lifeNotes } from "../notes/notes.schema";
+import { lifeSettings } from "../settings/settings.schema";
+import { routineTasks } from "../tasks/tasks.schema";
+import { timerSessions } from "../timer-sessions/timer-sessions.schema";
 import { defaultState } from "../shared/life-os.defaults";
 import {
   categoryFromRow,
@@ -24,7 +22,7 @@ import {
   toTaskValues,
   toTimerValues,
 } from "../shared/life-os.mapper";
-import type { LifeOsState } from "../shared/life-os.types";
+import type { LifeOsState } from "./life-os-state.types";
 import { normalizeState } from "../shared/life-os.validation";
 
 @Injectable()

@@ -1,7 +1,8 @@
 import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { eq } from "drizzle-orm";
-import { accountProfiles, passwordRecoveryRequests } from "../db/schema";
+import { passwordRecoveryRequests } from "../auth/auth.schema";
+import { accountProfiles } from "./accounts.schema";
 import { DRIZZLE, type Database } from "../db/database.module";
 import type { ProfilePayload, RecoveryPayload } from "./accounts.types";
 

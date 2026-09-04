@@ -1,1 +1,8 @@
-export type { LifeNote } from "../shared/life-os.types";
+export type LifeNote = {
+  id: string;
+  title: string;
+  body: string;
+  tags: string[];
+  createdAt: string;
+  updatedAt: string;
+};

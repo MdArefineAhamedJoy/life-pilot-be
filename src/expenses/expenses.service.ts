@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { expenses } from "../db/schema";
+import { expenses } from "./expenses.schema";
 import { expenseFromRow, toExpenseValues } from "../shared/life-os.mapper";
 import { createId, normalizeExpense, numberValue, textValue, todayDate } from "../shared/life-os.validation";
 import type { Expense, ParsedExpenseRow } from "./expenses.types";

@@ -9,7 +9,8 @@ import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } fr
 import { promisify } from "util";
 import { eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { accountProfiles, authSessions, authUsers } from "../db/schema";
+import { accountProfiles } from "../accounts/accounts.schema";
+import { authSessions, authUsers } from "./auth.schema";
 import type { AuthResponse, AuthUserResponse, LoginPayload, RegisterPayload } from "./auth.types";
 
 const scrypt = promisify(scryptCallback);

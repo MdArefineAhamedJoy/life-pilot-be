@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Put } from "@nestjs/common";
-import type { LifeOsState } from "../shared/life-os.types";
+import type { LifeOsState } from "./life-os-state.types";
 import { LifeOsStateService } from "./life-os-state.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";

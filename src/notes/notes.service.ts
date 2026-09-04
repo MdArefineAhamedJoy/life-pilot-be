@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { lifeNotes } from "../db/schema";
+import { lifeNotes } from "./notes.schema";
 import { noteFromRow, toNoteValues } from "../shared/life-os.mapper";
 import { createId, isoDate, normalizeNote } from "../shared/life-os.validation";
 import type { LifeNote } from "./notes.types";

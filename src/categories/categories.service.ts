@@ -1,7 +1,8 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, asc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { budgetCategories, expenses } from "../db/schema";
+import { expenses } from "../expenses/expenses.schema";
+import { budgetCategories } from "./categories.schema";
 import { categoryFromRow, toCategoryValues } from "../shared/life-os.mapper";
 import { createId, normalizeCategory, numberValue } from "../shared/life-os.validation";
 import type { BudgetCategory } from "./categories.types";

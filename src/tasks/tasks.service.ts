@@ -1,7 +1,7 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, asc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { routineTasks } from "../db/schema";
+import { routineTasks } from "./tasks.schema";
 import { taskFromRow, toTaskValues } from "../shared/life-os.mapper";
 import { createId, normalizeTask } from "../shared/life-os.validation";
 import type { RoutineStatus, RoutineTask } from "./tasks.types";

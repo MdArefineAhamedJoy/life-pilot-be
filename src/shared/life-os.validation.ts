@@ -1,7 +1,13 @@
 import { BadRequestException } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { defaultState } from "./life-os.defaults";
-import type { BudgetCategory, Expense, LifeNote, LifeOsState, LifeSettings, RoutineTask, TimerSession } from "./life-os.types";
+import type { BudgetCategory } from "../categories/categories.types";
+import type { Expense } from "../expenses/expenses.types";
+import type { LifeOsState } from "../life-os-state/life-os-state.types";
+import type { LifeNote } from "../notes/notes.types";
+import type { LifeSettings } from "../settings/settings.types";
+import type { RoutineTask } from "../tasks/tasks.types";
+import type { TimerSession } from "../timer-sessions/timer-sessions.types";
 
 const categoryTypes = ["daily", "weekly", "monthly"] as const;
 const budgetStatuses = ["active", "paused", "completed"] as const;

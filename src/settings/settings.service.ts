@@ -1,7 +1,7 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { lifeSettings } from "../db/schema";
+import { lifeSettings } from "./settings.schema";
 import { defaultState } from "../shared/life-os.defaults";
 import { settingsFromRow, toSettingsValues } from "../shared/life-os.mapper";
 import { normalizeSettings } from "../shared/life-os.validation";

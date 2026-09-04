@@ -1,14 +1,17 @@
-import {
-  budgetCategories,
-  expenses,
-  lifeNotes,
-  lifeSettings,
-  routineTasks,
-  timerSessions,
-} from "../db/schema";
+import { budgetCategories } from "../categories/categories.schema";
+import { expenses } from "../expenses/expenses.schema";
+import { lifeNotes } from "../notes/notes.schema";
+import { lifeSettings } from "../settings/settings.schema";
+import { routineTasks } from "../tasks/tasks.schema";
+import { timerSessions } from "../timer-sessions/timer-sessions.schema";
 import { settingsId } from "./life-os.defaults";
 import { dateValue, isoDate } from "./life-os.validation";
-import type { BudgetCategory, Expense, LifeNote, LifeSettings, RoutineTask, TimerSession } from "./life-os.types";
+import type { BudgetCategory } from "../categories/categories.types";
+import type { Expense } from "../expenses/expenses.types";
+import type { LifeNote } from "../notes/notes.types";
+import type { LifeSettings } from "../settings/settings.types";
+import type { RoutineTask } from "../tasks/tasks.types";
+import type { TimerSession } from "../timer-sessions/timer-sessions.types";
 
 export function toCategoryValues(category: BudgetCategory): typeof budgetCategories.$inferInsert {
   return {

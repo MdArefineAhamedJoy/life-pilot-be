@@ -1,1 +1,9 @@
-export type { TimerSession } from "../shared/life-os.types";
+export type TimerSession = {
+  id: string;
+  taskId?: string;
+  title: string;
+  category: string;
+  durationSeconds: number;
+  mode: "timer" | "stopwatch" | "focus";
+  createdAt?: string;
+};
