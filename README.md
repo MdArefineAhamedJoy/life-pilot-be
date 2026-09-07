@@ -26,7 +26,7 @@ docker compose up --build
 
 The container database is exposed on `POSTGRES_PORT` (default `5433`) to avoid conflicting with a locally installed PostgreSQL server on `5432`. The API remains available on `http://localhost:4000`.
 
-The frontend reads `NEXT_PUBLIC_API_BASE_URL`; set it to `http://localhost:4000/api` for local backend persistence. If it is empty or the API is unavailable, the frontend keeps using its localStorage fallback.
+The frontend server reads `API_BASE_URL` (legacy `NEXT_PUBLIC_API_BASE_URL` fallback). Set it to `http://127.0.0.1:4000/api`. Browser requests go through the Next.js same-origin API proxy with an HttpOnly session cookie. API failures are shown to users; there is no shared localStorage fallback.
 
 ## Main API
 
@@ -34,7 +34,7 @@ The frontend reads `NEXT_PUBLIC_API_BASE_URL`; set it to `http://localhost:4000/
 - `GET /api/health` and `GET /api/health/db`
 - `GET /api/life-os/state` returns the full app state.
 - `PUT /api/life-os/state` replaces the full app state for backup/restore sync.
-- `POST /api/life-os/reset` restores the seeded personal data.
+- `POST /api/life-os/reset` clears only the authenticated user's workspace. New accounts have no seeded personal data.
 - `/api/life-os/categories`, `/expenses`, `/tasks`, `/timer-sessions`, `/notes`, and `/settings` expose focused CRUD routes matching the frontend state model.
 - `GET /api/account/profile`, `POST /api/account/profile`, and `POST /api/account/password-recovery` keep the existing account profile flows.
 
@@ -65,3 +65,9 @@ Backend modules are top-level folders under `src`:
 - `shared`
 - `db`
 - `health`
+
+## Integration checks
+
+Build both repositories, then run `pnpm test:integration` in `life-os-ai`. Tests use an isolated PostgreSQL schema and cover browser forms, protected pages, CRUD, cross-user isolation, backups, validation, and logout. Existing user data is untouched.
+
+Password recovery returns HTTP 501 until email delivery and token redemption are implemented. Profile reads in settings and snapshots use the authenticated account identity. JSON requests accept up to 2 MB for profile images and backups.

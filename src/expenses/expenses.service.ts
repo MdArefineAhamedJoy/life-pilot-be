@@ -1,4 +1,4 @@
-import { Inject, Injectable } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable } from "@nestjs/common";
 import { and, desc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { expenses } from "./expenses.schema";
@@ -22,6 +22,7 @@ export class ExpensesService {
   }
 
   async createBulk(userId: string, rows: ParsedExpenseRow[], date = todayDate()) {
+    if (!Array.isArray(rows) || rows.some((row) => !row || typeof row !== "object")) throw new BadRequestException("Rows must be an array of expense records.");
     const expensesToInsert = rows
       .filter((row) => textValue(row.itemName) && numberValue(row.amount) > 0)
       .map((row) =>

@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, asc, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { routineTasks } from "./tasks.schema";
@@ -41,7 +41,7 @@ export class TasksService {
       alertEnabled: current.alertEnabled ?? undefined,
       alertOffsetMinutes: current.alertOffsetMinutes ?? undefined,
       reminderAt: current.reminderAt ?? undefined,
-      completedAt: current.completedAt ?? undefined,
+      completedAt: payload.status ? (payload.status === "completed" ? current.completedAt ?? new Date().toISOString() : undefined) : current.completedAt ?? undefined,
       note: current.note ?? undefined,
       ...payload,
     });
@@ -58,6 +58,7 @@ export class TasksService {
   }
 
   async reorder(userId: string, orderedTaskIds: string[]) {
+    if (!Array.isArray(orderedTaskIds) || orderedTaskIds.some((id) => typeof id !== "string")) throw new BadRequestException("Task IDs must be an array of strings.");
     await this.db.transaction(async (tx) => {
       for (const [index, taskId] of orderedTaskIds.entries()) {
         await tx

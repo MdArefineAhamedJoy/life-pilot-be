@@ -48,6 +48,28 @@ export function numberValue(value: unknown, fallback = 0) {
   return Number.isFinite(number) ? number : fallback;
 }
 
+function nonnegativeNumber(value: unknown, field: string) {
+  const number = Number(value);
+  if (value === undefined || value === null || value === "" || !Number.isFinite(number) || number < 0) {
+    throw new BadRequestException(`${field} must be a non-negative number.`);
+  }
+  return number;
+}
+
+function calendarDate(value: unknown, field: string) {
+  const date = requiredText(value, field);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) {
+    throw new BadRequestException(`${field} must be a valid YYYY-MM-DD date.`);
+  }
+  return date;
+}
+
+function clockTime(value: unknown, field: string) {
+  const time = requiredText(value, field);
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new BadRequestException(`${field} must use HH:mm.`);
+  return time;
+}
+
 export function optionalNumber(value: unknown) {
   const number = typeof value === "number" ? value : Number(value);
   return Number.isFinite(number) ? number : undefined;
@@ -89,7 +111,7 @@ export function normalizeCategory(id: string, payload: Partial<BudgetCategory>):
     id,
     name: requiredText(payload.name, "Category name"),
     type: oneOf(payload.type, categoryTypes, "monthly"),
-    monthlyLimit: numberValue(payload.monthlyLimit),
+    monthlyLimit: nonnegativeNumber(payload.monthlyLimit, "Budget limit"),
     weeklyLimit: optionalNumber(payload.weeklyLimit),
     dailyLimit: optionalNumber(payload.dailyLimit),
     startDate: optionalText(payload.startDate),
@@ -106,10 +128,10 @@ export function normalizeCategory(id: string, payload: Partial<BudgetCategory>):
 export function normalizeExpense(id: string, payload: Partial<Expense>): Expense {
   return {
     id,
-    date: requiredText(payload.date, "Expense date"),
+    date: calendarDate(payload.date, "Expense date"),
     itemName: requiredText(payload.itemName, "Expense item name"),
     category: requiredText(payload.category, "Expense category"),
-    amount: numberValue(payload.amount),
+    amount: nonnegativeNumber(payload.amount, "Expense amount"),
     quantity: optionalNumber(payload.quantity),
     unit: optionalText(payload.unit),
     paymentMethod: optionalText(payload.paymentMethod),
@@ -124,8 +146,8 @@ export function normalizeTask(id: string, payload: Partial<RoutineTask>): Routin
     title: requiredText(payload.title, "Task title"),
     category: requiredText(payload.category, "Task category"),
     priority: oneOf(payload.priority, priorities, "medium"),
-    plannedStart: requiredText(payload.plannedStart, "Task start time"),
-    plannedEnd: requiredText(payload.plannedEnd, "Task end time"),
+    plannedStart: clockTime(payload.plannedStart, "Task start time"),
+    plannedEnd: clockTime(payload.plannedEnd, "Task end time"),
     order: optionalNumber(payload.order),
     actualMinutes: optionalNumber(payload.actualMinutes),
     status: oneOf(payload.status, taskStatuses, "pending"),
@@ -144,7 +166,7 @@ export function normalizeTimerSession(id: string, payload: Partial<TimerSession>
     taskId: optionalText(payload.taskId),
     title: requiredText(payload.title, "Timer title"),
     category: requiredText(payload.category, "Timer category"),
-    durationSeconds: Math.round(numberValue(payload.durationSeconds)),
+    durationSeconds: Math.round(nonnegativeNumber(payload.durationSeconds, "Timer duration")),
     mode: oneOf(payload.mode, timerModes, "stopwatch"),
     createdAt: optionalText(payload.createdAt) ?? new Date().toISOString(),
   };
@@ -182,6 +204,15 @@ export function normalizeSettings(payload: Partial<LifeSettings>): LifeSettings 
 }
 
 export function normalizeState(payload: Partial<LifeOsState>): LifeOsState {
+  for (const key of ["categories", "expenses", "tasks", "timerSessions", "notes"] as const) {
+    const rows = payload[key];
+    if (rows !== undefined && (!Array.isArray(rows) || rows.some((row) => !row || typeof row !== "object" || Array.isArray(row)))) {
+      throw new BadRequestException(`${key} must be an array of records.`);
+    }
+  }
+  if (payload.settings !== undefined && (!payload.settings || typeof payload.settings !== "object" || Array.isArray(payload.settings))) {
+    throw new BadRequestException("Settings must be an object.");
+  }
   return {
     categories: (payload.categories ?? defaultState.categories).map((category) =>
       normalizeCategory(category.id || createId("cat"), category),

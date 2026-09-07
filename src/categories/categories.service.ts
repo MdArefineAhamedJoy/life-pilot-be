@@ -4,7 +4,7 @@ import { DRIZZLE, type Database } from "../db/database.module";
 import { expenses } from "../expenses/expenses.schema";
 import { budgetCategories } from "./categories.schema";
 import { categoryFromRow, toCategoryValues } from "../shared/life-os.mapper";
-import { createId, normalizeCategory, numberValue } from "../shared/life-os.validation";
+import { createId, normalizeCategory } from "../shared/life-os.validation";
 import type { BudgetCategory } from "./categories.types";
 
 @Injectable()
@@ -61,17 +61,7 @@ export class CategoriesService {
   }
 
   async updateLimit(userId: string, categoryId: string, monthlyLimit: unknown) {
-    const [row] = await this.db
-      .update(budgetCategories)
-      .set({ monthlyLimit: numberValue(monthlyLimit), updatedAt: new Date() })
-      .where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)))
-      .returning();
-
-    if (!row) {
-      throw new NotFoundException("Budget category was not found.");
-    }
-
-    return categoryFromRow(row);
+    return this.update(userId, categoryId, { monthlyLimit: monthlyLimit as number });
   }
 
   async remove(userId: string, categoryId: string) {

@@ -24,6 +24,7 @@ import {
 } from "../shared/life-os.mapper";
 import type { LifeOsState } from "./life-os-state.types";
 import { normalizeState } from "../shared/life-os.validation";
+import { withAccountProfile } from "../shared/profile-settings";
 
 @Injectable()
 export class LifeOsStateService {
@@ -47,7 +48,7 @@ export class LifeOsStateService {
       tasks: taskRows.map(taskFromRow),
       timerSessions: timerRows.map(timerFromRow),
       notes: noteRows.map(noteFromRow),
-      settings: settingsRow ? settingsFromRow(settingsRow) : defaultState.settings,
+      settings: await withAccountProfile(this.db, userId, settingsRow ? settingsFromRow(settingsRow) : defaultState.settings),
     };
   }
 
@@ -93,25 +94,10 @@ export class LifeOsStateService {
   }
 
   private async ensureState(userId: string) {
-    const settings = await this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) });
-    if (settings) {
-      return;
-    }
-
-    const [category, expense, task, timer, note] = await Promise.all([
-      this.db.query.budgetCategories.findFirst({ where: eq(budgetCategories.userId, userId) }),
-      this.db.query.expenses.findFirst({ where: eq(expenses.userId, userId) }),
-      this.db.query.routineTasks.findFirst({ where: eq(routineTasks.userId, userId) }),
-      this.db.query.timerSessions.findFirst({ where: eq(timerSessions.userId, userId) }),
-      this.db.query.lifeNotes.findFirst({ where: eq(lifeNotes.userId, userId) }),
-    ]);
-
-    if (!category && !expense && !task && !timer && !note) {
-      await this.replaceState(userId, this.defaultStateForUser(userId));
-      return;
-    }
-
-    await this.db.insert(lifeSettings).values({ ...toSettingsValues(defaultState.settings), id: userId });
+    // Empty workspaces need only a settings row. Concurrent reads never replace data.
+    await this.db.insert(lifeSettings)
+      .values({ ...toSettingsValues(defaultState.settings), id: userId })
+      .onConflictDoNothing({ target: lifeSettings.id });
   }
 
   private defaultStateForUser(userId: string): LifeOsState {

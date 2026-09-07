@@ -1,7 +1,6 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { randomUUID } from "crypto";
+import { BadRequestException, Inject, Injectable, NotFoundException, NotImplementedException } from "@nestjs/common";
 import { eq } from "drizzle-orm";
-import { passwordRecoveryRequests } from "../auth/auth.schema";
+import { authUsers } from "../auth/auth.schema";
 import { accountProfiles } from "./accounts.schema";
 import { DRIZZLE, type Database } from "../db/database.module";
 import type { ProfilePayload, RecoveryPayload } from "./accounts.types";
@@ -45,51 +44,43 @@ export class AccountsService {
 
     assertEmail(profileEmail);
 
-    const [profile] = await this.db
-      .insert(accountProfiles)
-      .values({
-        name,
-        email: profileEmail,
-        phone: cleanText(payload.phone) || null,
-        location: cleanText(payload.location) || null,
-        role: cleanText(payload.role) || null,
-        bio: cleanText(payload.bio) || null,
-        imageUrl: cleanText(payload.imageUrl) || null,
-        updatedAt: new Date(),
-      })
-      .onConflictDoUpdate({
-        target: accountProfiles.email,
-        set: {
+    return this.db.transaction(async (tx) => {
+      const [profile] = await tx
+        .insert(accountProfiles)
+        .values({
           name,
+          email: profileEmail,
           phone: cleanText(payload.phone) || null,
           location: cleanText(payload.location) || null,
           role: cleanText(payload.role) || null,
           bio: cleanText(payload.bio) || null,
           imageUrl: cleanText(payload.imageUrl) || null,
           updatedAt: new Date(),
-        },
-      })
-      .returning();
+        })
+        .onConflictDoUpdate({
+          target: accountProfiles.email,
+          set: {
+            name,
+            phone: cleanText(payload.phone) || null,
+            location: cleanText(payload.location) || null,
+            role: cleanText(payload.role) || null,
+            bio: cleanText(payload.bio) || null,
+            imageUrl: cleanText(payload.imageUrl) || null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
 
-    return profile;
+      await tx.update(authUsers).set({ name, phone: profile.phone, imageUrl: profile.imageUrl, updatedAt: new Date() })
+        .where(eq(authUsers.email, profileEmail));
+      return profile;
+    });
   }
 
   async requestPasswordRecovery(payload: RecoveryPayload) {
     const email = cleanText(payload.email);
     assertEmail(email);
 
-    const token = randomUUID();
-    const expiresAt = new Date(Date.now() + 1000 * 60 * 15);
-    const [request] = await this.db
-      .insert(passwordRecoveryRequests)
-      .values({
-        email,
-        token,
-        expiresAt,
-      })
-      .returning();
-
-    // Email delivery is not configured yet. Never expose a recovery token in an API response.
-    return { ok: true, expiresAt: request.expiresAt };
+    throw new NotImplementedException("Password recovery is unavailable because email delivery has not been configured.");
   }
 }

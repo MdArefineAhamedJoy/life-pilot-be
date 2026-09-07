@@ -5,6 +5,7 @@ import { lifeSettings } from "./settings.schema";
 import { defaultState } from "../shared/life-os.defaults";
 import { settingsFromRow, toSettingsValues } from "../shared/life-os.mapper";
 import { normalizeSettings } from "../shared/life-os.validation";
+import { withAccountProfile } from "../shared/profile-settings";
 import type { LifeSettings } from "./settings.types";
 
 @Injectable()
@@ -13,7 +14,7 @@ export class SettingsService {
 
   async find(userId: string) {
     const settings = await this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) });
-    return settings ? settingsFromRow(settings) : defaultState.settings;
+    return withAccountProfile(this.db, userId, settings ? settingsFromRow(settings) : defaultState.settings);
   }
 
   async update(userId: string, payload: Partial<LifeSettings>) {
@@ -29,6 +30,6 @@ export class SettingsService {
       })
       .returning();
 
-    return settingsFromRow(row);
+    return withAccountProfile(this.db, userId, settingsFromRow(row));
   }
 }

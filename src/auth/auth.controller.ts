@@ -5,7 +5,8 @@ import { AuthService } from "./auth.service";
 import type { AuthUserResponse, LoginPayload, RegisterPayload } from "./auth.types";
 
 function bearerToken(authorization?: string) {
-  return authorization?.startsWith("Bearer ") ? authorization.slice("Bearer ".length).trim() : "";
+  const [scheme, token] = authorization?.split(" ") ?? [];
+  return scheme?.toLowerCase() === "bearer" ? token?.trim() ?? "" : "";
 }
 
 @Controller("auth")
