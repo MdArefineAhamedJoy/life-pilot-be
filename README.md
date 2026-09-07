@@ -28,6 +28,18 @@ The container database is exposed on `POSTGRES_PORT` (default `5433`) to avoid c
 
 The frontend server reads `API_BASE_URL` (legacy `NEXT_PUBLIC_API_BASE_URL` fallback). Set it to `http://127.0.0.1:4000/api`. Browser requests go through the Next.js same-origin API proxy with an HttpOnly session cookie. API failures are shown to users; there is no shared localStorage fallback.
 
+## Vercel deployment
+
+The API is packaged as a Vercel serverless function at `api/[...path].ts`; all existing endpoints remain under `/api`, for example `/api/health`.
+
+Set these Vercel environment variables before deploying:
+
+- `DATABASE_URL` — the production PostgreSQL connection string.
+- `DATABASE_SSL=true` — required by most hosted PostgreSQL providers.
+- `CORS_ORIGIN` — your deployed frontend URL, for example `https://your-app.vercel.app`.
+
+Then run `pnpm db:migrate` against the production database and deploy with `npx vercel --prod`.
+
 ## Main API
 
 - `POST /api/auth/register`, `POST /api/auth/login`, `GET /api/auth/me`, and `POST /api/auth/logout`
