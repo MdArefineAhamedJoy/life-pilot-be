@@ -5,6 +5,7 @@ import { ConfigModule } from "@nestjs/config";
 import { AccountsModule } from "./accounts/accounts.module";
 import { AuthModule } from "./auth/auth.module";
 import { AuthGuard } from "./auth/auth.guard";
+import { BudgetsModule } from "./budgets/budgets.module";
 import { CategoriesModule } from "./categories/categories.module";
 import { DatabaseModule } from "./db/database.module";
 import { ExpensesModule } from "./expenses/expenses.module";
@@ -34,6 +35,7 @@ import { ApiResponseInterceptor } from "./shared/api-response.interceptor";
     AuthModule,
     AccountsModule,
     LifeOsStateModule,
+    BudgetsModule,
     CategoriesModule,
     ExpensesModule,
     TasksModule,

@@ -26,6 +26,8 @@ export class CategoriesService {
 
     return {
       items: rows.map(categoryFromRow),
+      page,
+      limit,
       total: Number(countRows[0]?.total ?? 0),
     };
   }
