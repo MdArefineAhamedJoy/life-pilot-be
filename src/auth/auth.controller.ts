@@ -34,9 +34,21 @@ export class AuthController {
     return user;
   }
 
+  @Public()
+  @Post("refresh")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 30, ttl: 60_000, blockDuration: 300_000 } })
+  refresh(@Headers("authorization") authorization?: string) {
+    return this.authService.refresh(bearerToken(authorization));
+  }
+
+  @Public()
   @Post("logout")
   @HttpCode(HttpStatus.OK)
-  logout(@Headers("authorization") authorization?: string) {
-    return this.authService.logout(bearerToken(authorization));
+  logout(
+    @Headers("authorization") authorization?: string,
+    @Headers("x-refresh-token") refreshToken?: string
+  ) {
+    return this.authService.logout(bearerToken(authorization), refreshToken?.trim() ?? "");
   }
 }

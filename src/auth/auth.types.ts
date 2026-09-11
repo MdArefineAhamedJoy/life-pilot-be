@@ -9,6 +9,7 @@ export type RegisterPayload = {
 export type LoginPayload = {
   email?: string;
   password?: string;
+  rememberMe?: boolean;
 };
 
 export type AuthUserResponse = {
@@ -21,6 +22,8 @@ export type AuthUserResponse = {
 
 export type AuthResponse = {
   user: AuthUserResponse;
-  token: string;
-  expiresAt: string;
+  accessToken: string;
+  refreshToken: string;
+  accessExpiresAt: string;
+  refreshExpiresAt: string;
 };

@@ -10,11 +10,21 @@ import { promisify } from "util";
 import { eq, lt } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { accountProfiles } from "../accounts/accounts.schema";
-import { authSessions, authUsers } from "./auth.schema";
+import { authAccessTokens, authSessions, authUsers } from "./auth.schema";
 import type { AuthResponse, AuthUserResponse, LoginPayload, RegisterPayload } from "./auth.types";
 
 const scrypt = promisify(scryptCallback);
 const sessionDays = 7;
+const rememberedSessionDays = 30;
+const defaultAccessTokenMinutes = 15;
+
+function accessTokenLifetimeMinutes() {
+  const configured = Number(process.env.ACCESS_TOKEN_TTL_MINUTES);
+  // Never permit an accidentally long-lived access credential through configuration.
+  return Number.isInteger(configured) && configured >= 5 && configured <= 60
+    ? configured
+    : defaultAccessTokenMinutes;
+}
 
 function hashSessionToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -136,13 +146,13 @@ export class AuthService {
       throw new UnauthorizedException("Invalid email or password.");
     }
 
-    return this.createSession(user);
+    return this.createSession(user, payload.rememberMe === true);
   }
 
   async getCurrentUser(token: string) {
-    const session = await this.findValidSession(token);
+    const accessToken = await this.findValidAccessToken(token);
     const user = await this.db.query.authUsers.findFirst({
-      where: eq(authUsers.id, session.userId),
+      where: eq(authUsers.id, accessToken.userId),
     });
 
     if (!user) {
@@ -152,34 +162,82 @@ export class AuthService {
     return userResponse(user);
   }
 
-  async logout(token: string) {
-    if (token) {
-      await this.db.delete(authSessions).where(eq(authSessions.token, hashSessionToken(token)));
+  async refresh(refreshToken: string): Promise<AuthResponse> {
+    const session = await this.findValidRefreshSession(refreshToken);
+    const user = await this.db.query.authUsers.findFirst({
+      where: eq(authUsers.id, session.userId),
+    });
+
+    if (!user) {
+      throw new UnauthorizedException("Session user was not found.");
+    }
+
+    // Rotate the refresh credential on every use. Its original absolute expiry is retained.
+    await this.revokeSession(session.id);
+    return this.createSession(user, session.expiresAt);
+  }
+
+  async logout(accessToken: string, refreshToken = "") {
+    if (accessToken) {
+      const access = await this.db.query.authAccessTokens.findFirst({
+        where: eq(authAccessTokens.token, hashSessionToken(accessToken)),
+      });
+      if (access) await this.revokeSession(access.sessionId);
+    }
+
+    if (refreshToken) {
+      const session = await this.db.query.authSessions.findFirst({
+        where: eq(authSessions.token, hashSessionToken(refreshToken)),
+      });
+      if (session) await this.revokeSession(session.id);
     }
 
     return { ok: true };
   }
 
-  private async createSession(user: typeof authUsers.$inferSelect): Promise<AuthResponse> {
-    const token = randomBytes(32).toString("base64url");
-    const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
+  private async createSession(
+    user: typeof authUsers.$inferSelect,
+    rememberMeOrExpiresAt: boolean | Date = false
+  ): Promise<AuthResponse> {
+    const refreshToken = randomBytes(32).toString("base64url");
+    const refreshExpiresAt =
+      rememberMeOrExpiresAt instanceof Date
+        ? rememberMeOrExpiresAt
+        : new Date(
+            Date.now() +
+              (rememberMeOrExpiresAt ? rememberedSessionDays : sessionDays) * 24 * 60 * 60 * 1000
+          );
+    const accessToken = randomBytes(32).toString("base64url");
+    const accessExpiresAt = new Date(Date.now() + accessTokenLifetimeMinutes() * 60 * 1000);
 
     await this.db.delete(authSessions).where(lt(authSessions.expiresAt, new Date()));
 
-    await this.db.insert(authSessions).values({
+    const [session] = await this.db
+      .insert(authSessions)
+      .values({
+        userId: user.id,
+        token: hashSessionToken(refreshToken),
+        expiresAt: refreshExpiresAt,
+      })
+      .returning({ id: authSessions.id });
+
+    await this.db.insert(authAccessTokens).values({
       userId: user.id,
-      token: hashSessionToken(token),
-      expiresAt,
+      sessionId: session.id,
+      token: hashSessionToken(accessToken),
+      expiresAt: accessExpiresAt,
     });
 
     return {
       user: userResponse(user),
-      token,
-      expiresAt: expiresAt.toISOString(),
+      accessToken,
+      refreshToken,
+      accessExpiresAt: accessExpiresAt.toISOString(),
+      refreshExpiresAt: refreshExpiresAt.toISOString(),
     };
   }
 
-  private async findValidSession(token: string) {
+  private async findValidRefreshSession(token: string) {
     if (!token) {
       throw new UnauthorizedException("Auth token is required.");
     }
@@ -193,5 +251,26 @@ export class AuthService {
     }
 
     return session;
+  }
+
+  private async findValidAccessToken(token: string) {
+    if (!token) {
+      throw new UnauthorizedException("Auth token is required.");
+    }
+
+    const accessToken = await this.db.query.authAccessTokens.findFirst({
+      where: eq(authAccessTokens.token, hashSessionToken(token)),
+    });
+
+    if (!accessToken || accessToken.expiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException("Access token is invalid or expired.");
+    }
+
+    return accessToken;
+  }
+
+  private async revokeSession(sessionId: string) {
+    await this.db.delete(authAccessTokens).where(eq(authAccessTokens.sessionId, sessionId));
+    await this.db.delete(authSessions).where(eq(authSessions.id, sessionId));
   }
 }

@@ -36,6 +36,13 @@
       "when": 1789157234895,
       "tag": "0004_chief_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789161814111,
+      "tag": "0005_lucky_stingray",
+      "breakpoints": true
     }
   ]
 }
