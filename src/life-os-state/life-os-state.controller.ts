@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Put } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Put } from "@nestjs/common";
 import type { LifeOsState } from "./life-os-state.types";
 import { LifeOsStateService } from "./life-os-state.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
@@ -19,6 +19,7 @@ export class LifeOsStateController {
   }
 
   @Post("reset")
+  @HttpCode(HttpStatus.OK)
   resetState(@CurrentUser() user: AuthUserResponse) {
     return this.lifeOsStateService.resetState(user.id);
   }

@@ -1,16 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Query } from "@nestjs/common";
 import { ExpensesService } from "./expenses.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import type { Expense, ParsedExpenseRow } from "./expenses.types";
+import { getPagination, paginate } from "../shared/api-response";
 
 @Controller("life-os/expenses")
 export class ExpensesController {
   constructor(private readonly expensesService: ExpensesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthUserResponse) {
-    return this.expensesService.findAll(user.id);
+  async findAll(
+    @CurrentUser() user: AuthUserResponse,
+    @Query("page") pageQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const expenses = await this.expensesService.findAll(user.id);
+    return paginate(expenses, getPagination(pageQuery, limitQuery));
   }
 
   @Post()

@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import { Public } from "../auth/public.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
@@ -15,12 +16,14 @@ export class AccountsController {
   }
 
   @Post("profile")
+  @HttpCode(HttpStatus.OK)
   saveProfile(@CurrentUser() user: AuthUserResponse, @Body() payload: ProfilePayload) {
     return this.accountsService.saveProfile(user.email, payload);
   }
 
   @Public()
   @Post("password-recovery")
+  @Throttle({ default: { limit: 3, ttl: 900_000, blockDuration: 900_000 } })
   requestPasswordRecovery(@Body() payload: RecoveryPayload) {
     return this.accountsService.requestPasswordRecovery(payload);
   }

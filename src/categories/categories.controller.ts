@@ -1,16 +1,27 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query } from "@nestjs/common";
 import { CategoriesService } from "./categories.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import type { BudgetCategory } from "./categories.types";
+import { getPagination } from "../shared/api-response";
 
 @Controller("life-os/categories")
 export class CategoriesController {
   constructor(private readonly categoriesService: CategoriesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthUserResponse) {
-    return this.categoriesService.findAll(user.id);
+  async findAll(
+    @CurrentUser() user: AuthUserResponse,
+    @Query("page") pageQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const { page, limit } = getPagination(pageQuery, limitQuery);
+    return this.categoriesService.findAll(user.id, page, limit);
+  }
+
+  @Get(":categoryId")
+  async findOne(@CurrentUser() user: AuthUserResponse, @Param("categoryId") categoryId: string) {
+    return this.categoriesService.findOne(user.id, categoryId);
   }
 
   @Post()

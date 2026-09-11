@@ -1,16 +1,22 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query } from "@nestjs/common";
 import { TimerSessionsService } from "./timer-sessions.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import type { TimerSession } from "./timer-sessions.types";
+import { getPagination, paginate } from "../shared/api-response";
 
 @Controller("life-os/timer-sessions")
 export class TimerSessionsController {
   constructor(private readonly timerSessionsService: TimerSessionsService) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthUserResponse) {
-    return this.timerSessionsService.findAll(user.id);
+  async findAll(
+    @CurrentUser() user: AuthUserResponse,
+    @Query("page") pageQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const sessions = await this.timerSessionsService.findAll(user.id);
+    return paginate(sessions, getPagination(pageQuery, limitQuery));
   }
 
   @Post()

@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Headers, Post } from "@nestjs/common";
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post } from "@nestjs/common";
+import { Throttle } from "@nestjs/throttler";
 import { CurrentUser } from "./auth-user.decorator";
 import { Public } from "./public.decorator";
 import { AuthService } from "./auth.service";
@@ -15,12 +16,15 @@ export class AuthController {
 
   @Public()
   @Post("register")
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   register(@Body() payload: RegisterPayload) {
     return this.authService.register(payload);
   }
 
   @Public()
   @Post("login")
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60_000, blockDuration: 300_000 } })
   login(@Body() payload: LoginPayload) {
     return this.authService.login(payload);
   }
@@ -31,6 +35,7 @@ export class AuthController {
   }
 
   @Post("logout")
+  @HttpCode(HttpStatus.OK)
   logout(@Headers("authorization") authorization?: string) {
     return this.authService.logout(bearerToken(authorization));
   }

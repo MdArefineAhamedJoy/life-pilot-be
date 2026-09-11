@@ -5,16 +5,20 @@ import {
   Injectable,
   UnauthorizedException,
 } from "@nestjs/common";
-import { randomBytes, randomUUID, scrypt as scryptCallback, timingSafeEqual } from "crypto";
+import { createHash, randomBytes, scrypt as scryptCallback, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { eq } from "drizzle-orm";
+import { eq, lt } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { accountProfiles } from "../accounts/accounts.schema";
 import { authSessions, authUsers } from "./auth.schema";
 import type { AuthResponse, AuthUserResponse, LoginPayload, RegisterPayload } from "./auth.types";
 
 const scrypt = promisify(scryptCallback);
-const sessionDays = 30;
+const sessionDays = 7;
+
+function hashSessionToken(token: string) {
+  return createHash("sha256").update(token).digest("hex");
+}
 
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -150,19 +154,21 @@ export class AuthService {
 
   async logout(token: string) {
     if (token) {
-      await this.db.delete(authSessions).where(eq(authSessions.token, token));
+      await this.db.delete(authSessions).where(eq(authSessions.token, hashSessionToken(token)));
     }
 
     return { ok: true };
   }
 
   private async createSession(user: typeof authUsers.$inferSelect): Promise<AuthResponse> {
-    const token = randomUUID();
+    const token = randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + sessionDays * 24 * 60 * 60 * 1000);
+
+    await this.db.delete(authSessions).where(lt(authSessions.expiresAt, new Date()));
 
     await this.db.insert(authSessions).values({
       userId: user.id,
-      token,
+      token: hashSessionToken(token),
       expiresAt,
     });
 
@@ -179,7 +185,7 @@ export class AuthService {
     }
 
     const session = await this.db.query.authSessions.findFirst({
-      where: eq(authSessions.token, token),
+      where: eq(authSessions.token, hashSessionToken(token)),
     });
 
     if (!session || session.expiresAt.getTime() <= Date.now()) {

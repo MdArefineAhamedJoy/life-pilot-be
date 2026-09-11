@@ -1,16 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Post, Put, Query } from "@nestjs/common";
 import { NotesService } from "./notes.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import type { LifeNote } from "./notes.types";
+import { getPagination, paginate } from "../shared/api-response";
 
 @Controller("life-os/notes")
 export class NotesController {
   constructor(private readonly notesService: NotesService) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthUserResponse) {
-    return this.notesService.findAll(user.id);
+  async findAll(
+    @CurrentUser() user: AuthUserResponse,
+    @Query("page") pageQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const notes = await this.notesService.findAll(user.id);
+    return paginate(notes, getPagination(pageQuery, limitQuery));
   }
 
   @Post()

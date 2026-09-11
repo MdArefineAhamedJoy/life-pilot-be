@@ -1,16 +1,22 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from "@nestjs/common";
 import { TasksService } from "./tasks.service";
 import { CurrentUser } from "../auth/auth-user.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import type { RoutineStatus, RoutineTask } from "./tasks.types";
+import { getPagination, paginate } from "../shared/api-response";
 
 @Controller("life-os/tasks")
 export class TasksController {
   constructor(private readonly tasksService: TasksService) {}
 
   @Get()
-  findAll(@CurrentUser() user: AuthUserResponse) {
-    return this.tasksService.findAll(user.id);
+  async findAll(
+    @CurrentUser() user: AuthUserResponse,
+    @Query("page") pageQuery?: string,
+    @Query("limit") limitQuery?: string
+  ) {
+    const tasks = await this.tasksService.findAll(user.id);
+    return paginate(tasks, getPagination(pageQuery, limitQuery));
   }
 
   @Post()

@@ -1,5 +1,5 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, count, eq } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
 import { expenses } from "../expenses/expenses.schema";
 import { budgetCategories } from "./categories.schema";
@@ -11,13 +11,34 @@ import type { BudgetCategory } from "./categories.types";
 export class CategoriesService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
-  async findAll(userId: string) {
-    const rows = await this.db
-      .select()
-      .from(budgetCategories)
-      .where(eq(budgetCategories.userId, userId))
-      .orderBy(asc(budgetCategories.createdAt));
-    return rows.map(categoryFromRow);
+  async findAll(userId: string, page: number, limit: number) {
+    const where = eq(budgetCategories.userId, userId);
+    const [rows, countRows] = await Promise.all([
+      this.db
+        .select()
+        .from(budgetCategories)
+        .where(where)
+        .orderBy(asc(budgetCategories.createdAt))
+        .limit(limit)
+        .offset((page - 1) * limit),
+      this.db.select({ total: count() }).from(budgetCategories).where(where),
+    ]);
+
+    return {
+      items: rows.map(categoryFromRow),
+      total: Number(countRows[0]?.total ?? 0),
+    };
+  }
+
+  async findOne(userId: string, categoryId: string) {
+    const category = await this.db.query.budgetCategories.findFirst({
+      where: and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)),
+    });
+    if (!category) {
+      throw new NotFoundException("Budget category was not found.");
+    }
+
+    return categoryFromRow(category);
   }
 
   async create(userId: string, payload: Omit<BudgetCategory, "id">) {
