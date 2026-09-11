@@ -19,3 +19,17 @@ export type Expense = {
   note?: string;
   sourceType: ExpenseSourceType;
 };
+
+export type ExpenseFilters = {
+  search?: string;
+  date?: string;
+  category?: string;
+  paymentMethod?: string;
+};
+
+export type ExpenseSummary = {
+  totalAmount: number;
+  transactionCount: number;
+  totalRecordCount: number;
+  averageAmount: number;
+};
