@@ -5,5 +5,5 @@ type RequestWithUser = { user: AuthUserResponse };
 
 export const CurrentUser = createParamDecorator(
   (_data: unknown, context: ExecutionContext): AuthUserResponse =>
-    (context.switchToHttp().getRequest<RequestWithUser>()).user,
+    context.switchToHttp().getRequest<RequestWithUser>().user
 );

@@ -1,4 +1,10 @@
-import { BadRequestException, Inject, Injectable, NotFoundException, NotImplementedException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from "@nestjs/common";
 import { eq } from "drizzle-orm";
 import { authUsers } from "../auth/auth.schema";
 import { accountProfiles } from "./accounts.schema";
@@ -71,7 +77,9 @@ export class AccountsService {
         })
         .returning();
 
-      await tx.update(authUsers).set({ name, phone: profile.phone, imageUrl: profile.imageUrl, updatedAt: new Date() })
+      await tx
+        .update(authUsers)
+        .set({ name, phone: profile.phone, imageUrl: profile.imageUrl, updatedAt: new Date() })
         .where(eq(authUsers.email, profileEmail));
       return profile;
     });
@@ -81,6 +89,8 @@ export class AccountsService {
     const email = cleanText(payload.email);
     assertEmail(email);
 
-    throw new NotImplementedException("Password recovery is unavailable because email delivery has not been configured.");
+    throw new NotImplementedException(
+      "Password recovery is unavailable because email delivery has not been configured."
+    );
   }
 }

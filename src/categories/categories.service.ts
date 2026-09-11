@@ -12,18 +12,27 @@ export class CategoriesService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async findAll(userId: string) {
-    const rows = await this.db.select().from(budgetCategories).where(eq(budgetCategories.userId, userId)).orderBy(asc(budgetCategories.createdAt));
+    const rows = await this.db
+      .select()
+      .from(budgetCategories)
+      .where(eq(budgetCategories.userId, userId))
+      .orderBy(asc(budgetCategories.createdAt));
     return rows.map(categoryFromRow);
   }
 
   async create(userId: string, payload: Omit<BudgetCategory, "id">) {
     const category = normalizeCategory(createId("cat"), payload);
-    const [row] = await this.db.insert(budgetCategories).values({ ...toCategoryValues(category), userId }).returning();
+    const [row] = await this.db
+      .insert(budgetCategories)
+      .values({ ...toCategoryValues(category), userId })
+      .returning();
     return categoryFromRow(row);
   }
 
   async update(userId: string, categoryId: string, payload: Partial<BudgetCategory>) {
-    const current = await this.db.query.budgetCategories.findFirst({ where: and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)) });
+    const current = await this.db.query.budgetCategories.findFirst({
+      where: and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)),
+    });
     if (!current) {
       throw new NotFoundException("Budget category was not found.");
     }
@@ -54,7 +63,10 @@ export class CategoriesService {
       .returning();
 
     if (previousName !== nextCategory.name) {
-      await this.db.update(expenses).set({ category: nextCategory.name }).where(and(eq(expenses.category, previousName), eq(expenses.userId, userId)));
+      await this.db
+        .update(expenses)
+        .set({ category: nextCategory.name })
+        .where(and(eq(expenses.category, previousName), eq(expenses.userId, userId)));
     }
 
     return categoryFromRow(row);
@@ -65,7 +77,9 @@ export class CategoriesService {
   }
 
   async remove(userId: string, categoryId: string) {
-    await this.db.delete(budgetCategories).where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)));
+    await this.db
+      .delete(budgetCategories)
+      .where(and(eq(budgetCategories.id, categoryId), eq(budgetCategories.userId, userId)));
     return { id: categoryId };
   }
 }

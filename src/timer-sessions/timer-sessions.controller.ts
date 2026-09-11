@@ -14,7 +14,10 @@ export class TimerSessionsController {
   }
 
   @Post()
-  create(@CurrentUser() user: AuthUserResponse, @Body() payload: Omit<TimerSession, "id" | "createdAt">) {
+  create(
+    @CurrentUser() user: AuthUserResponse,
+    @Body() payload: Omit<TimerSession, "id" | "createdAt">
+  ) {
     return this.timerSessionsService.create(user.id, payload);
   }
 }

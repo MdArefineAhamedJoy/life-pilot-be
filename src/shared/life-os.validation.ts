@@ -50,7 +50,13 @@ export function numberValue(value: unknown, fallback = 0) {
 
 function nonnegativeNumber(value: unknown, field: string) {
   const number = Number(value);
-  if (value === undefined || value === null || value === "" || !Number.isFinite(number) || number < 0) {
+  if (
+    value === undefined ||
+    value === null ||
+    value === "" ||
+    !Number.isFinite(number) ||
+    number < 0
+  ) {
     throw new BadRequestException(`${field} must be a non-negative number.`);
   }
   return number;
@@ -58,7 +64,11 @@ function nonnegativeNumber(value: unknown, field: string) {
 
 function calendarDate(value: unknown, field: string) {
   const date = requiredText(value, field);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date)) || new Date(date).toISOString().slice(0, 10) !== date) {
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    Number.isNaN(Date.parse(date)) ||
+    new Date(date).toISOString().slice(0, 10) !== date
+  ) {
     throw new BadRequestException(`${field} must be a valid YYYY-MM-DD date.`);
   }
   return date;
@@ -66,7 +76,8 @@ function calendarDate(value: unknown, field: string) {
 
 function clockTime(value: unknown, field: string) {
   const time = requiredText(value, field);
-  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) throw new BadRequestException(`${field} must use HH:mm.`);
+  if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(time))
+    throw new BadRequestException(`${field} must use HH:mm.`);
   return time;
 }
 
@@ -94,7 +105,10 @@ export function isoDate(value: Date) {
 
 export function normalizeTags(value: unknown) {
   return Array.isArray(value)
-    ? value.filter((tag): tag is string => typeof tag === "string").map((tag) => tag.trim()).filter(Boolean)
+    ? value
+        .filter((tag): tag is string => typeof tag === "string")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
     : [];
 }
 
@@ -195,7 +209,8 @@ export function normalizeSettings(payload: Partial<LifeSettings>): LifeSettings 
     profileRole: textValue(payload.profileRole, defaultState.settings.profileRole),
     profileBio: textValue(payload.profileBio, defaultState.settings.profileBio),
     profileImage: textValue(payload.profileImage, defaultState.settings.profileImage),
-    currency: textValue(payload.currency, defaultState.settings.currency) || defaultState.settings.currency,
+    currency:
+      textValue(payload.currency, defaultState.settings.currency) || defaultState.settings.currency,
     notificationEnabled: booleanValue(payload.notificationEnabled),
     quietHoursStart: textValue(payload.quietHoursStart, defaultState.settings.quietHoursStart),
     quietHoursEnd: textValue(payload.quietHoursEnd, defaultState.settings.quietHoursEnd),
@@ -206,25 +221,36 @@ export function normalizeSettings(payload: Partial<LifeSettings>): LifeSettings 
 export function normalizeState(payload: Partial<LifeOsState>): LifeOsState {
   for (const key of ["categories", "expenses", "tasks", "timerSessions", "notes"] as const) {
     const rows = payload[key];
-    if (rows !== undefined && (!Array.isArray(rows) || rows.some((row) => !row || typeof row !== "object" || Array.isArray(row)))) {
+    if (
+      rows !== undefined &&
+      (!Array.isArray(rows) ||
+        rows.some((row) => !row || typeof row !== "object" || Array.isArray(row)))
+    ) {
       throw new BadRequestException(`${key} must be an array of records.`);
     }
   }
-  if (payload.settings !== undefined && (!payload.settings || typeof payload.settings !== "object" || Array.isArray(payload.settings))) {
+  if (
+    payload.settings !== undefined &&
+    (!payload.settings || typeof payload.settings !== "object" || Array.isArray(payload.settings))
+  ) {
     throw new BadRequestException("Settings must be an object.");
   }
   return {
     categories: (payload.categories ?? defaultState.categories).map((category) =>
-      normalizeCategory(category.id || createId("cat"), category),
+      normalizeCategory(category.id || createId("cat"), category)
     ),
     expenses: (payload.expenses ?? defaultState.expenses).map((expense) =>
-      normalizeExpense(expense.id || createId("expense"), expense),
+      normalizeExpense(expense.id || createId("expense"), expense)
     ),
-    tasks: (payload.tasks ?? defaultState.tasks).map((task) => normalizeTask(task.id || createId("task"), task)),
+    tasks: (payload.tasks ?? defaultState.tasks).map((task) =>
+      normalizeTask(task.id || createId("task"), task)
+    ),
     timerSessions: (payload.timerSessions ?? defaultState.timerSessions).map((session) =>
-      normalizeTimerSession(session.id || createId("timer"), session),
+      normalizeTimerSession(session.id || createId("timer"), session)
     ),
-    notes: (payload.notes ?? defaultState.notes).map((note) => normalizeNote(note.id || createId("note"), note)),
+    notes: (payload.notes ?? defaultState.notes).map((note) =>
+      normalizeNote(note.id || createId("note"), note)
+    ),
     settings: normalizeSettings(payload.settings ?? defaultState.settings),
   };
 }

@@ -11,18 +11,27 @@ export class TasksService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async findAll(userId: string) {
-    const rows = await this.db.select().from(routineTasks).where(eq(routineTasks.userId, userId)).orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt));
+    const rows = await this.db
+      .select()
+      .from(routineTasks)
+      .where(eq(routineTasks.userId, userId))
+      .orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt));
     return rows.map(taskFromRow);
   }
 
   async create(userId: string, payload: Omit<RoutineTask, "id">) {
     const task = normalizeTask(createId("task"), payload);
-    const [row] = await this.db.insert(routineTasks).values({ ...toTaskValues(task), userId }).returning();
+    const [row] = await this.db
+      .insert(routineTasks)
+      .values({ ...toTaskValues(task), userId })
+      .returning();
     return taskFromRow(row);
   }
 
   async update(userId: string, taskId: string, payload: Partial<RoutineTask>) {
-    const current = await this.db.query.routineTasks.findFirst({ where: and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)) });
+    const current = await this.db.query.routineTasks.findFirst({
+      where: and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)),
+    });
     if (!current) {
       throw new NotFoundException("Routine task was not found.");
     }
@@ -41,12 +50,20 @@ export class TasksService {
       alertEnabled: current.alertEnabled ?? undefined,
       alertOffsetMinutes: current.alertOffsetMinutes ?? undefined,
       reminderAt: current.reminderAt ?? undefined,
-      completedAt: payload.status ? (payload.status === "completed" ? current.completedAt ?? new Date().toISOString() : undefined) : current.completedAt ?? undefined,
+      completedAt: payload.status
+        ? payload.status === "completed"
+          ? (current.completedAt ?? new Date().toISOString())
+          : undefined
+        : (current.completedAt ?? undefined),
       note: current.note ?? undefined,
       ...payload,
     });
 
-    const [row] = await this.db.update(routineTasks).set(toTaskValues(task)).where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId))).returning();
+    const [row] = await this.db
+      .update(routineTasks)
+      .set(toTaskValues(task))
+      .where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)))
+      .returning();
     return taskFromRow(row);
   }
 
@@ -58,7 +75,8 @@ export class TasksService {
   }
 
   async reorder(userId: string, orderedTaskIds: string[]) {
-    if (!Array.isArray(orderedTaskIds) || orderedTaskIds.some((id) => typeof id !== "string")) throw new BadRequestException("Task IDs must be an array of strings.");
+    if (!Array.isArray(orderedTaskIds) || orderedTaskIds.some((id) => typeof id !== "string"))
+      throw new BadRequestException("Task IDs must be an array of strings.");
     await this.db.transaction(async (tx) => {
       for (const [index, taskId] of orderedTaskIds.entries()) {
         await tx
@@ -72,7 +90,9 @@ export class TasksService {
   }
 
   async remove(userId: string, taskId: string) {
-    await this.db.delete(routineTasks).where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)));
+    await this.db
+      .delete(routineTasks)
+      .where(and(eq(routineTasks.id, taskId), eq(routineTasks.userId, userId)));
     return { id: taskId };
   }
 }

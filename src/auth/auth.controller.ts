@@ -6,7 +6,7 @@ import type { AuthUserResponse, LoginPayload, RegisterPayload } from "./auth.typ
 
 function bearerToken(authorization?: string) {
   const [scheme, token] = authorization?.split(" ") ?? [];
-  return scheme?.toLowerCase() === "bearer" ? token?.trim() ?? "" : "";
+  return scheme?.toLowerCase() === "bearer" ? (token?.trim() ?? "") : "";
 }
 
 @Controller("auth")

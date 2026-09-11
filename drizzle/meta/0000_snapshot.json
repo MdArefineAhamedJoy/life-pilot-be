@@ -79,9 +79,7 @@
         "account_profiles_email_unique": {
           "name": "account_profiles_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -140,9 +138,7 @@
         "password_recovery_requests_token_unique": {
           "name": "password_recovery_requests_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -154,11 +150,7 @@
     "public.password_recovery_status": {
       "name": "password_recovery_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "used",
-        "expired"
-      ]
+      "values": ["pending", "used", "expired"]
     }
   },
   "schemas": {},

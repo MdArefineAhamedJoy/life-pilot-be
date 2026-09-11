@@ -1,8 +1,20 @@
-import { boolean, doublePrecision, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  doublePrecision,
+  pgEnum,
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+} from "drizzle-orm/pg-core";
 
 export const budgetCategoryType = pgEnum("budget_category_type", ["daily", "weekly", "monthly"]);
 export const budgetStatus = pgEnum("budget_status", ["active", "paused", "completed"]);
-export const budgetCategoryStatus = pgEnum("budget_category_status", ["active", "pushed", "blocked"]);
+export const budgetCategoryStatus = pgEnum("budget_category_status", [
+  "active",
+  "pushed",
+  "blocked",
+]);
 
 export const budgetCategories = pgTable("budget_categories", {
   id: text("id").primaryKey(),

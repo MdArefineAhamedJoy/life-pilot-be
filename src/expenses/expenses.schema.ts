@@ -1,6 +1,11 @@
 import { doublePrecision, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-export const expenseSourceType = pgEnum("expense_source_type", ["manual", "image", "text", "recurring"]);
+export const expenseSourceType = pgEnum("expense_source_type", [
+  "manual",
+  "image",
+  "text",
+  "recurring",
+]);
 
 export const expenses = pgTable("expenses", {
   id: text("id").primaryKey(),

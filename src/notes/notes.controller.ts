@@ -14,12 +14,19 @@ export class NotesController {
   }
 
   @Post()
-  create(@CurrentUser() user: AuthUserResponse, @Body() payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }) {
+  create(
+    @CurrentUser() user: AuthUserResponse,
+    @Body() payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }
+  ) {
     return this.notesService.create(user.id, payload);
   }
 
   @Put(":noteId")
-  update(@CurrentUser() user: AuthUserResponse, @Param("noteId") noteId: string, @Body() payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }) {
+  update(
+    @CurrentUser() user: AuthUserResponse,
+    @Param("noteId") noteId: string,
+    @Body() payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }
+  ) {
     return this.notesService.update(user.id, noteId, payload);
   }
 

@@ -1,6 +1,10 @@
 import { pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
-export const passwordRecoveryStatus = pgEnum("password_recovery_status", ["pending", "used", "expired"]);
+export const passwordRecoveryStatus = pgEnum("password_recovery_status", [
+  "pending",
+  "used",
+  "expired",
+]);
 
 export const authUsers = pgTable("auth_users", {
   id: uuid("id").defaultRandom().primaryKey(),

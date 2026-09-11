@@ -19,12 +19,20 @@ export class CategoriesController {
   }
 
   @Put(":categoryId")
-  update(@CurrentUser() user: AuthUserResponse, @Param("categoryId") categoryId: string, @Body() payload: Partial<BudgetCategory>) {
+  update(
+    @CurrentUser() user: AuthUserResponse,
+    @Param("categoryId") categoryId: string,
+    @Body() payload: Partial<BudgetCategory>
+  ) {
     return this.categoriesService.update(user.id, categoryId, payload);
   }
 
   @Patch(":categoryId/limit")
-  updateLimit(@CurrentUser() user: AuthUserResponse, @Param("categoryId") categoryId: string, @Body("monthlyLimit") monthlyLimit: unknown) {
+  updateLimit(
+    @CurrentUser() user: AuthUserResponse,
+    @Param("categoryId") categoryId: string,
+    @Body("monthlyLimit") monthlyLimit: unknown
+  ) {
     return this.categoriesService.updateLimit(user.id, categoryId, monthlyLimit);
   }
 

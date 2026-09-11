@@ -33,14 +33,35 @@ export class LifeOsStateService {
   async getState(userId: string): Promise<LifeOsState> {
     await this.ensureState(userId);
 
-    const [categoryRows, expenseRows, taskRows, timerRows, noteRows, settingsRow] = await Promise.all([
-      this.db.select().from(budgetCategories).where(eq(budgetCategories.userId, userId)).orderBy(asc(budgetCategories.createdAt)),
-      this.db.select().from(expenses).where(eq(expenses.userId, userId)).orderBy(desc(expenses.date), desc(expenses.createdAt)),
-      this.db.select().from(routineTasks).where(eq(routineTasks.userId, userId)).orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt)),
-      this.db.select().from(timerSessions).where(eq(timerSessions.userId, userId)).orderBy(desc(timerSessions.createdAt)),
-      this.db.select().from(lifeNotes).where(eq(lifeNotes.userId, userId)).orderBy(desc(lifeNotes.updatedAt)),
-      this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) }),
-    ]);
+    const [categoryRows, expenseRows, taskRows, timerRows, noteRows, settingsRow] =
+      await Promise.all([
+        this.db
+          .select()
+          .from(budgetCategories)
+          .where(eq(budgetCategories.userId, userId))
+          .orderBy(asc(budgetCategories.createdAt)),
+        this.db
+          .select()
+          .from(expenses)
+          .where(eq(expenses.userId, userId))
+          .orderBy(desc(expenses.date), desc(expenses.createdAt)),
+        this.db
+          .select()
+          .from(routineTasks)
+          .where(eq(routineTasks.userId, userId))
+          .orderBy(asc(routineTasks.sortOrder), asc(routineTasks.createdAt)),
+        this.db
+          .select()
+          .from(timerSessions)
+          .where(eq(timerSessions.userId, userId))
+          .orderBy(desc(timerSessions.createdAt)),
+        this.db
+          .select()
+          .from(lifeNotes)
+          .where(eq(lifeNotes.userId, userId))
+          .orderBy(desc(lifeNotes.updatedAt)),
+        this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) }),
+      ]);
 
     return {
       categories: categoryRows.map(categoryFromRow),
@@ -48,7 +69,11 @@ export class LifeOsStateService {
       tasks: taskRows.map(taskFromRow),
       timerSessions: timerRows.map(timerFromRow),
       notes: noteRows.map(noteFromRow),
-      settings: await withAccountProfile(this.db, userId, settingsRow ? settingsFromRow(settingsRow) : defaultState.settings),
+      settings: await withAccountProfile(
+        this.db,
+        userId,
+        settingsRow ? settingsFromRow(settingsRow) : defaultState.settings
+      ),
     };
   }
 
@@ -64,23 +89,33 @@ export class LifeOsStateService {
       await tx.delete(lifeSettings).where(eq(lifeSettings.id, userId));
 
       if (state.categories.length) {
-        await tx.insert(budgetCategories).values(state.categories.map((category) => ({ ...toCategoryValues(category), userId })));
+        await tx
+          .insert(budgetCategories)
+          .values(state.categories.map((category) => ({ ...toCategoryValues(category), userId })));
       }
 
       if (state.expenses.length) {
-        await tx.insert(expenses).values(state.expenses.map((expense) => ({ ...toExpenseValues(expense), userId })));
+        await tx
+          .insert(expenses)
+          .values(state.expenses.map((expense) => ({ ...toExpenseValues(expense), userId })));
       }
 
       if (state.tasks.length) {
-        await tx.insert(routineTasks).values(state.tasks.map((task) => ({ ...toTaskValues(task), userId })));
+        await tx
+          .insert(routineTasks)
+          .values(state.tasks.map((task) => ({ ...toTaskValues(task), userId })));
       }
 
       if (state.timerSessions.length) {
-        await tx.insert(timerSessions).values(state.timerSessions.map((timer) => ({ ...toTimerValues(timer), userId })));
+        await tx
+          .insert(timerSessions)
+          .values(state.timerSessions.map((timer) => ({ ...toTimerValues(timer), userId })));
       }
 
       if (state.notes.length) {
-        await tx.insert(lifeNotes).values(state.notes.map((note) => ({ ...toNoteValues(note), userId })));
+        await tx
+          .insert(lifeNotes)
+          .values(state.notes.map((note) => ({ ...toNoteValues(note), userId })));
       }
 
       await tx.insert(lifeSettings).values({ ...toSettingsValues(state.settings), id: userId });
@@ -95,7 +130,8 @@ export class LifeOsStateService {
 
   private async ensureState(userId: string) {
     // Empty workspaces need only a settings row. Concurrent reads never replace data.
-    await this.db.insert(lifeSettings)
+    await this.db
+      .insert(lifeSettings)
       .values({ ...toSettingsValues(defaultState.settings), id: userId })
       .onConflictDoNothing({ target: lifeSettings.id });
   }
@@ -103,10 +139,16 @@ export class LifeOsStateService {
   private defaultStateForUser(userId: string): LifeOsState {
     const scopedId = (id: string) => `${userId}:${id}`;
     return {
-      categories: defaultState.categories.map((category) => ({ ...category, id: scopedId(category.id) })),
+      categories: defaultState.categories.map((category) => ({
+        ...category,
+        id: scopedId(category.id),
+      })),
       expenses: defaultState.expenses.map((expense) => ({ ...expense, id: scopedId(expense.id) })),
       tasks: defaultState.tasks.map((task) => ({ ...task, id: scopedId(task.id) })),
-      timerSessions: defaultState.timerSessions.map((timer) => ({ ...timer, id: scopedId(timer.id) })),
+      timerSessions: defaultState.timerSessions.map((timer) => ({
+        ...timer,
+        id: scopedId(timer.id),
+      })),
       notes: defaultState.notes.map((note) => ({ ...note, id: scopedId(note.id) })),
       settings: { ...defaultState.settings },
     };

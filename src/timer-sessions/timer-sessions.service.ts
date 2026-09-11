@@ -11,13 +11,20 @@ export class TimerSessionsService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async findAll(userId: string) {
-    const rows = await this.db.select().from(timerSessions).where(eq(timerSessions.userId, userId)).orderBy(desc(timerSessions.createdAt));
+    const rows = await this.db
+      .select()
+      .from(timerSessions)
+      .where(eq(timerSessions.userId, userId))
+      .orderBy(desc(timerSessions.createdAt));
     return rows.map(timerFromRow);
   }
 
   async create(userId: string, payload: Omit<TimerSession, "id" | "createdAt">) {
     const session = normalizeTimerSession(createId("timer"), payload);
-    const [row] = await this.db.insert(timerSessions).values({ ...toTimerValues(session), userId }).returning();
+    const [row] = await this.db
+      .insert(timerSessions)
+      .values({ ...toTimerValues(session), userId })
+      .returning();
     return timerFromRow(row);
   }
 }

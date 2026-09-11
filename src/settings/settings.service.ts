@@ -13,8 +13,14 @@ export class SettingsService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async find(userId: string) {
-    const settings = await this.db.query.lifeSettings.findFirst({ where: eq(lifeSettings.id, userId) });
-    return withAccountProfile(this.db, userId, settings ? settingsFromRow(settings) : defaultState.settings);
+    const settings = await this.db.query.lifeSettings.findFirst({
+      where: eq(lifeSettings.id, userId),
+    });
+    return withAccountProfile(
+      this.db,
+      userId,
+      settings ? settingsFromRow(settings) : defaultState.settings
+    );
   }
 
   async update(userId: string, payload: Partial<LifeSettings>) {

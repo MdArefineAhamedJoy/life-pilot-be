@@ -1,8 +1,20 @@
 import { boolean, integer, pgEnum, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const routinePriority = pgEnum("routine_priority", ["low", "medium", "high"]);
-export const routineStatus = pgEnum("routine_status", ["pending", "active", "completed", "skipped", "delayed", "missed"]);
-export const routineRepeatRule = pgEnum("routine_repeat_rule", ["daily", "weekly", "custom", "once"]);
+export const routineStatus = pgEnum("routine_status", [
+  "pending",
+  "active",
+  "completed",
+  "skipped",
+  "delayed",
+  "missed",
+]);
+export const routineRepeatRule = pgEnum("routine_repeat_rule", [
+  "daily",
+  "weekly",
+  "custom",
+  "once",
+]);
 
 export const routineTasks = pgTable("routine_tasks", {
   id: text("id").primaryKey(),

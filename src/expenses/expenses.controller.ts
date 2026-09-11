@@ -19,7 +19,11 @@ export class ExpensesController {
   }
 
   @Post("bulk")
-  createBulk(@CurrentUser() user: AuthUserResponse, @Body("rows") rows: ParsedExpenseRow[] = [], @Body("date") date?: string) {
+  createBulk(
+    @CurrentUser() user: AuthUserResponse,
+    @Body("rows") rows: ParsedExpenseRow[] = [],
+    @Body("date") date?: string
+  ) {
     return this.expensesService.createBulk(user.id, rows, date);
   }
 

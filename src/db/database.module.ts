@@ -30,7 +30,10 @@ function databaseUrl(configService: ConfigService) {
       useFactory: (configService: ConfigService) =>
         new Pool({
           connectionString: databaseUrl(configService),
-          ssl: configService.get<string>("DATABASE_SSL") === "true" ? { rejectUnauthorized: false } : undefined,
+          ssl:
+            configService.get<string>("DATABASE_SSL") === "true"
+              ? { rejectUnauthorized: false }
+              : undefined,
         }),
     },
     {

@@ -11,18 +11,31 @@ export class NotesService {
   constructor(@Inject(DRIZZLE) private readonly db: Database) {}
 
   async findAll(userId: string) {
-    const rows = await this.db.select().from(lifeNotes).where(eq(lifeNotes.userId, userId)).orderBy(desc(lifeNotes.updatedAt));
+    const rows = await this.db
+      .select()
+      .from(lifeNotes)
+      .where(eq(lifeNotes.userId, userId))
+      .orderBy(desc(lifeNotes.updatedAt));
     return rows.map(noteFromRow);
   }
 
   async create(userId: string, payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }) {
     const note = normalizeNote(createId("note"), payload);
-    const [row] = await this.db.insert(lifeNotes).values({ ...toNoteValues(note), userId }).returning();
+    const [row] = await this.db
+      .insert(lifeNotes)
+      .values({ ...toNoteValues(note), userId })
+      .returning();
     return noteFromRow(row);
   }
 
-  async update(userId: string, noteId: string, payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }) {
-    const current = await this.db.query.lifeNotes.findFirst({ where: and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId)) });
+  async update(
+    userId: string,
+    noteId: string,
+    payload: Pick<LifeNote, "title" | "body"> & { tags?: string[] }
+  ) {
+    const current = await this.db.query.lifeNotes.findFirst({
+      where: and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId)),
+    });
     if (!current) {
       throw new NotFoundException("Life note was not found.");
     }
@@ -34,12 +47,18 @@ export class NotesService {
       createdAt: isoDate(current.createdAt),
       updatedAt: new Date().toISOString(),
     });
-    const [row] = await this.db.update(lifeNotes).set(toNoteValues(note)).where(and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId))).returning();
+    const [row] = await this.db
+      .update(lifeNotes)
+      .set(toNoteValues(note))
+      .where(and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId)))
+      .returning();
     return noteFromRow(row);
   }
 
   async remove(userId: string, noteId: string) {
-    await this.db.delete(lifeNotes).where(and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId)));
+    await this.db
+      .delete(lifeNotes)
+      .where(and(eq(lifeNotes.id, noteId), eq(lifeNotes.userId, userId)));
     return { id: noteId };
   }
 }

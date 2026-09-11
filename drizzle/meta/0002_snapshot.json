@@ -79,9 +79,7 @@
         "account_profiles_email_unique": {
           "name": "account_profiles_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -132,9 +130,7 @@
         "auth_sessions_token_unique": {
           "name": "auth_sessions_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -204,9 +200,7 @@
         "auth_users_email_unique": {
           "name": "auth_users_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -623,9 +617,7 @@
         "password_recovery_requests_token_unique": {
           "name": "password_recovery_requests_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -817,97 +809,52 @@
     "public.ai_provider": {
       "name": "ai_provider",
       "schema": "public",
-      "values": [
-        "off",
-        "free-api",
-        "local"
-      ]
+      "values": ["off", "free-api", "local"]
     },
     "public.budget_category_status": {
       "name": "budget_category_status",
       "schema": "public",
-      "values": [
-        "active",
-        "pushed",
-        "blocked"
-      ]
+      "values": ["active", "pushed", "blocked"]
     },
     "public.budget_category_type": {
       "name": "budget_category_type",
       "schema": "public",
-      "values": [
-        "daily",
-        "weekly",
-        "monthly"
-      ]
+      "values": ["daily", "weekly", "monthly"]
     },
     "public.budget_status": {
       "name": "budget_status",
       "schema": "public",
-      "values": [
-        "active",
-        "paused",
-        "completed"
-      ]
+      "values": ["active", "paused", "completed"]
     },
     "public.expense_source_type": {
       "name": "expense_source_type",
       "schema": "public",
-      "values": [
-        "manual",
-        "image",
-        "text",
-        "recurring"
-      ]
+      "values": ["manual", "image", "text", "recurring"]
     },
     "public.password_recovery_status": {
       "name": "password_recovery_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "used",
-        "expired"
-      ]
+      "values": ["pending", "used", "expired"]
     },
     "public.routine_priority": {
       "name": "routine_priority",
       "schema": "public",
-      "values": [
-        "low",
-        "medium",
-        "high"
-      ]
+      "values": ["low", "medium", "high"]
     },
     "public.routine_repeat_rule": {
       "name": "routine_repeat_rule",
       "schema": "public",
-      "values": [
-        "daily",
-        "weekly",
-        "custom",
-        "once"
-      ]
+      "values": ["daily", "weekly", "custom", "once"]
     },
     "public.routine_status": {
       "name": "routine_status",
       "schema": "public",
-      "values": [
-        "pending",
-        "active",
-        "completed",
-        "skipped",
-        "delayed",
-        "missed"
-      ]
+      "values": ["pending", "active", "completed", "skipped", "delayed", "missed"]
     },
     "public.timer_mode": {
       "name": "timer_mode",
       "schema": "public",
-      "values": [
-        "timer",
-        "stopwatch",
-        "focus"
-      ]
+      "values": ["timer", "stopwatch", "focus"]
     }
   },
   "schemas": {},

@@ -19,17 +19,28 @@ export class TasksController {
   }
 
   @Patch("reorder")
-  reorder(@CurrentUser() user: AuthUserResponse, @Body("orderedTaskIds") orderedTaskIds: string[] = []) {
+  reorder(
+    @CurrentUser() user: AuthUserResponse,
+    @Body("orderedTaskIds") orderedTaskIds: string[] = []
+  ) {
     return this.tasksService.reorder(user.id, orderedTaskIds);
   }
 
   @Patch(":taskId")
-  update(@CurrentUser() user: AuthUserResponse, @Param("taskId") taskId: string, @Body() payload: Partial<RoutineTask>) {
+  update(
+    @CurrentUser() user: AuthUserResponse,
+    @Param("taskId") taskId: string,
+    @Body() payload: Partial<RoutineTask>
+  ) {
     return this.tasksService.update(user.id, taskId, payload);
   }
 
   @Patch(":taskId/status")
-  updateStatus(@CurrentUser() user: AuthUserResponse, @Param("taskId") taskId: string, @Body("status") status: RoutineStatus) {
+  updateStatus(
+    @CurrentUser() user: AuthUserResponse,
+    @Param("taskId") taskId: string,
+    @Body("status") status: RoutineStatus
+  ) {
     return this.tasksService.updateStatus(user.id, taskId, status);
   }
 
