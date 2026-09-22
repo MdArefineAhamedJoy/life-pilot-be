@@ -11,3 +11,9 @@ export type ProfilePayload = {
 export type RecoveryPayload = {
   email?: string;
 };
+
+export type ResetPasswordPayload = {
+  token?: string;
+  password?: string;
+  passwordConfirmation?: string;
+};

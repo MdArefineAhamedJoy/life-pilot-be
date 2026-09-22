@@ -4,7 +4,7 @@ import { CurrentUser } from "../auth/auth-user.decorator";
 import { Public } from "../auth/public.decorator";
 import type { AuthUserResponse } from "../auth/auth.types";
 import { AccountsService } from "./accounts.service";
-import type { ProfilePayload, RecoveryPayload } from "./accounts.types";
+import type { ProfilePayload, RecoveryPayload, ResetPasswordPayload } from "./accounts.types";
 
 @Controller("account")
 export class AccountsController {
@@ -26,5 +26,12 @@ export class AccountsController {
   @Throttle({ default: { limit: 3, ttl: 900_000, blockDuration: 900_000 } })
   requestPasswordRecovery(@Body() payload: RecoveryPayload) {
     return this.accountsService.requestPasswordRecovery(payload);
+  }
+
+  @Public()
+  @Post("password-reset")
+  @Throttle({ default: { limit: 5, ttl: 900_000, blockDuration: 900_000 } })
+  resetPassword(@Body() payload: ResetPasswordPayload) {
+    return this.accountsService.resetPassword(payload);
   }
 }

@@ -195,6 +195,35 @@ export class AuthService {
     return { ok: true };
   }
 
+  async replacePassword(email: string, password: string, passwordConfirmation: string) {
+    const cleanEmail = cleanText(email).toLowerCase();
+    assertEmail(cleanEmail);
+    assertPassword(password);
+
+    if (password !== passwordConfirmation) {
+      throw new BadRequestException("Password confirmation does not match.");
+    }
+
+    const user = await this.db.query.authUsers.findFirst({
+      where: eq(authUsers.email, cleanEmail),
+      columns: { id: true },
+    });
+    if (!user) {
+      throw new UnauthorizedException("Password reset request is no longer valid.");
+    }
+
+    await this.db.transaction(async (tx) => {
+      await tx
+        .update(authUsers)
+        .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
+        .where(eq(authUsers.email, cleanEmail));
+
+      // Resetting a password invalidates every current browser session for that account.
+      await tx.delete(authAccessTokens).where(eq(authAccessTokens.userId, user.id));
+      await tx.delete(authSessions).where(eq(authSessions.userId, user.id));
+    });
+  }
+
   private async createSession(
     user: typeof authUsers.$inferSelect,
     rememberMeOrExpiresAt: boolean | Date = false

@@ -8,6 +8,7 @@ import { AuthGuard } from "./auth/auth.guard";
 import { BudgetsModule } from "./budgets/budgets.module";
 import { CategoriesModule } from "./categories/categories.module";
 import { DatabaseModule } from "./db/database.module";
+import { EmailModule } from "./email/email.module";
 import { ExpensesModule } from "./expenses/expenses.module";
 import { HealthModule } from "./health/health.module";
 import { LifeOsStateModule } from "./life-os-state/life-os-state.module";
@@ -31,6 +32,7 @@ import { ApiResponseInterceptor } from "./shared/api-response.interceptor";
       },
     ]),
     DatabaseModule,
+    EmailModule,
     HealthModule,
     AuthModule,
     AccountsModule,
