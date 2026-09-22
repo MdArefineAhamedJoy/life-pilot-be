@@ -2,6 +2,7 @@ import { budgetCategories } from "../categories/categories.schema";
 import { expenses } from "../expenses/expenses.schema";
 import { lifeNotes } from "../notes/notes.schema";
 import { lifeSettings } from "../settings/settings.schema";
+import { shoppingItems } from "../shopping/shopping.schema";
 import { routineTasks } from "../tasks/tasks.schema";
 import { timerSessions } from "../timer-sessions/timer-sessions.schema";
 import { settingsId } from "./life-os.defaults";
@@ -10,6 +11,7 @@ import type { BudgetCategory } from "../categories/categories.types";
 import type { Expense } from "../expenses/expenses.types";
 import type { LifeNote } from "../notes/notes.types";
 import type { LifeSettings } from "../settings/settings.types";
+import type { ShoppingItem } from "../shopping/shopping.types";
 import type { RoutineTask } from "../tasks/tasks.types";
 import type { TimerSession } from "../timer-sessions/timer-sessions.types";
 
@@ -35,6 +37,21 @@ export function toExpenseValues(expense: Expense): typeof expenses.$inferInsert 
     unit: expense.unit ?? null,
     paymentMethod: expense.paymentMethod ?? null,
     note: expense.note ?? null,
+    updatedAt: new Date(),
+  };
+}
+
+export function toShoppingItemValues(item: ShoppingItem): typeof shoppingItems.$inferInsert {
+  return {
+    id: item.id,
+    name: item.name,
+    status: item.status,
+    category: item.category ?? null,
+    quantity: item.quantity ?? null,
+    unit: item.unit ?? null,
+    estimatedPrice: item.estimatedPrice ?? null,
+    note: item.note ?? null,
+    purchasedAt: item.purchasedAt ? dateValue(item.purchasedAt) : null,
     updatedAt: new Date(),
   };
 }
@@ -122,6 +139,21 @@ export function expenseFromRow(expense: typeof expenses.$inferSelect): Expense {
     paymentMethod: expense.paymentMethod ?? undefined,
     note: expense.note ?? undefined,
     sourceType: expense.sourceType,
+  };
+}
+
+export function shoppingItemFromRow(item: typeof shoppingItems.$inferSelect): ShoppingItem {
+  return {
+    id: item.id,
+    name: item.name,
+    category: item.category ?? undefined,
+    quantity: item.quantity ?? undefined,
+    unit: item.unit ?? undefined,
+    estimatedPrice: item.estimatedPrice ?? undefined,
+    status: item.status,
+    note: item.note ?? undefined,
+    purchasedAt: item.purchasedAt ? isoDate(item.purchasedAt) : undefined,
+    createdAt: isoDate(item.createdAt),
   };
 }
 

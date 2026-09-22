@@ -7,5 +7,6 @@ export * from "../categories/categories.schema";
 export * from "../expenses/expenses.schema";
 export * from "../notes/notes.schema";
 export * from "../settings/settings.schema";
+export * from "../shopping/shopping.schema";
 export * from "../tasks/tasks.schema";
 export * from "../timer-sessions/timer-sessions.schema";

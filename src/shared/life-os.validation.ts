@@ -6,6 +6,7 @@ import type { Expense } from "../expenses/expenses.types";
 import type { LifeOsState } from "../life-os-state/life-os-state.types";
 import type { LifeNote } from "../notes/notes.types";
 import type { LifeSettings } from "../settings/settings.types";
+import type { ShoppingItem } from "../shopping/shopping.types";
 import type { RoutineTask } from "../tasks/tasks.types";
 import type { TimerSession } from "../timer-sessions/timer-sessions.types";
 
@@ -18,6 +19,7 @@ const taskStatuses = ["pending", "active", "completed", "skipped", "delayed", "m
 const repeatRules = ["daily", "weekly", "custom", "once"] as const;
 const timerModes = ["timer", "stopwatch", "focus"] as const;
 const aiProviders = ["off", "free-api", "local"] as const;
+const shoppingStatuses = ["pending", "purchased"] as const;
 
 export function createId(prefix: string) {
   return `${prefix}-${randomUUID()}`;
@@ -151,6 +153,27 @@ export function normalizeExpense(id: string, payload: Partial<Expense>): Expense
     paymentMethod: optionalText(payload.paymentMethod),
     note: optionalText(payload.note),
     sourceType: oneOf(payload.sourceType, sourceTypes, "manual"),
+  };
+}
+
+export function normalizeShoppingItem(id: string, payload: Partial<ShoppingItem>): ShoppingItem {
+  const status = oneOf(payload.status, shoppingStatuses, "pending");
+  return {
+    id,
+    name: requiredText(payload.name, "Shopping item name"),
+    category: optionalText(payload.category),
+    quantity: optionalNumber(payload.quantity),
+    unit: optionalText(payload.unit),
+    estimatedPrice:
+      payload.estimatedPrice === undefined
+        ? undefined
+        : nonnegativeNumber(payload.estimatedPrice, "Estimated price"),
+    status,
+    note: optionalText(payload.note),
+    purchasedAt:
+      status === "purchased"
+        ? (optionalText(payload.purchasedAt) ?? new Date().toISOString())
+        : undefined,
   };
 }
 

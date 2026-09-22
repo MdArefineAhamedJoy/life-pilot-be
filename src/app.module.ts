@@ -14,6 +14,7 @@ import { HealthModule } from "./health/health.module";
 import { LifeOsStateModule } from "./life-os-state/life-os-state.module";
 import { NotesModule } from "./notes/notes.module";
 import { SettingsModule } from "./settings/settings.module";
+import { ShoppingModule } from "./shopping/shopping.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { TimerSessionsModule } from "./timer-sessions/timer-sessions.module";
 import { ApiExceptionFilter } from "./shared/api-exception.filter";
@@ -44,6 +45,7 @@ import { ApiResponseInterceptor } from "./shared/api-response.interceptor";
     TimerSessionsModule,
     NotesModule,
     SettingsModule,
+    ShoppingModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },

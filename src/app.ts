@@ -44,11 +44,14 @@ export async function createApp(): Promise<NestExpressApplication> {
   });
 
   const configService = app.get(ConfigService);
-  const corsOrigin = configService.get<string>("CORS_ORIGIN") ?? "http://localhost:3000";
+  const corsOrigins = (configService.get<string>("CORS_ORIGIN") ?? "http://localhost:3000")
+    .split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean);
 
   app.setGlobalPrefix("api");
   app.enableCors({
-    origin: corsOrigin,
+    origin: corsOrigins,
     credentials: true,
     methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"],

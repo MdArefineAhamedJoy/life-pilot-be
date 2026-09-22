@@ -43,6 +43,13 @@
       "when": 1789161814111,
       "tag": "0005_lucky_stingray",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790099261886,
+      "tag": "0006_thin_skrulls",
+      "breakpoints": true
     }
   ]
 }
