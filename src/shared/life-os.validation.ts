@@ -20,6 +20,7 @@ const repeatRules = ["daily", "weekly", "custom", "once"] as const;
 const timerModes = ["timer", "stopwatch", "focus"] as const;
 const aiProviders = ["off", "free-api", "local"] as const;
 const shoppingStatuses = ["pending", "purchased"] as const;
+const warrantyStatuses = ["none", "warranty", "guarantee", "both"] as const;
 
 export function createId(prefix: string) {
   return `${prefix}-${randomUUID()}`;
@@ -136,6 +137,9 @@ export function normalizeCategory(id: string, payload: Partial<BudgetCategory>):
     categoryStatus: maybeOneOf(payload.categoryStatus, categoryStatuses),
     note: optionalText(payload.note),
     extraNote: optionalText(payload.extraNote),
+    subcategories: Array.isArray(payload.subcategories)
+      ? [...new Set(payload.subcategories.map((item) => textValue(item)).filter(Boolean))]
+      : [],
     color: textValue(payload.color, "teal") || "teal",
     isActive: typeof payload.isActive === "boolean" ? payload.isActive : true,
   };
@@ -162,12 +166,34 @@ export function normalizeShoppingItem(id: string, payload: Partial<ShoppingItem>
     id,
     name: requiredText(payload.name, "Shopping item name"),
     category: optionalText(payload.category),
+    subCategory: optionalText(payload.subCategory),
+    brand: optionalText(payload.brand),
+    model: optionalText(payload.model),
+    storeName: optionalText(payload.storeName),
     quantity: optionalNumber(payload.quantity),
     unit: optionalText(payload.unit),
     estimatedPrice:
       payload.estimatedPrice === undefined
         ? undefined
         : nonnegativeNumber(payload.estimatedPrice, "Estimated price"),
+    productPrice:
+      payload.productPrice === undefined
+        ? undefined
+        : nonnegativeNumber(payload.productPrice, "Product price"),
+    totalPrice:
+      payload.totalPrice === undefined
+        ? undefined
+        : nonnegativeNumber(payload.totalPrice, "Total paid"),
+    purchaseDate: payload.purchaseDate ? calendarDate(payload.purchaseDate, "Purchase date") : undefined,
+    paymentMethod: optionalText(payload.paymentMethod),
+    receiptDocuments: normalizeShoppingDocuments(payload.receiptDocuments, "Receipt"),
+    warrantyStatus: maybeOneOf(payload.warrantyStatus, warrantyStatuses),
+    warrantyExpiresAt: payload.warrantyExpiresAt
+      ? calendarDate(payload.warrantyExpiresAt, "Warranty expiry date")
+      : undefined,
+    warrantyNote: optionalText(payload.warrantyNote),
+    warrantyDocuments: normalizeShoppingDocuments(payload.warrantyDocuments, "Warranty"),
+    expenseId: optionalText(payload.expenseId),
     status,
     note: optionalText(payload.note),
     purchasedAt:
@@ -175,6 +201,29 @@ export function normalizeShoppingItem(id: string, payload: Partial<ShoppingItem>
         ? (optionalText(payload.purchasedAt) ?? new Date().toISOString())
         : undefined,
   };
+}
+
+function normalizeShoppingDocuments(value: unknown, label: string) {
+  if (value === undefined || value === null) return [];
+  if (!Array.isArray(value) || value.length > 5) {
+    throw new BadRequestException(`${label} documents must contain up to 5 files.`);
+  }
+  return value.map((document) => {
+    if (!document || typeof document !== "object" || Array.isArray(document)) {
+      throw new BadRequestException(`${label} document is invalid.`);
+    }
+    const entry = document as Record<string, unknown>;
+    const fileName = requiredText(entry.fileName, `${label} file name`);
+    const mimeType = requiredText(entry.mimeType, `${label} file type`);
+    const size = nonnegativeNumber(entry.size, `${label} file size`);
+    const dataUrl = requiredText(entry.dataUrl, `${label} file`);
+    if (!/^(image\/(jpeg|png|webp)|application\/pdf)$/.test(mimeType) ||
+      !new RegExp(`^data:${mimeType.replace("/", "\\/")};base64,`).test(dataUrl) ||
+      size > 2 * 1024 * 1024 || dataUrl.length > 2_800_000) {
+      throw new BadRequestException(`${label} files must be JPG, PNG, WEBP, or PDF under 2 MB.`);
+    }
+    return { fileName, mimeType, size, dataUrl };
+  });
 }
 
 export function normalizeTask(id: string, payload: Partial<RoutineTask>): RoutineTask {

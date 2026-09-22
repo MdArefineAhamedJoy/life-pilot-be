@@ -50,6 +50,13 @@
       "when": 1790099261886,
       "tag": "0006_thin_skrulls",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790104684642,
+      "tag": "0007_old_toad",
+      "breakpoints": true
     }
   ]
 }

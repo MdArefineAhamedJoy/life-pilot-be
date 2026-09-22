@@ -1,8 +1,9 @@
 import { Inject, Injectable, NotFoundException } from "@nestjs/common";
 import { and, count, desc, eq, ilike } from "drizzle-orm";
 import { DRIZZLE, type Database } from "../db/database.module";
-import { createId, normalizeShoppingItem } from "../shared/life-os.validation";
-import { shoppingItemFromRow, toShoppingItemValues } from "../shared/life-os.mapper";
+import { expenses } from "../expenses/expenses.schema";
+import { createId, normalizeExpense, normalizeShoppingItem, todayDate } from "../shared/life-os.validation";
+import { shoppingItemFromRow, toExpenseValues, toShoppingItemValues } from "../shared/life-os.mapper";
 import { shoppingItems } from "./shopping.schema";
 import type { ShoppingFilters, ShoppingItem, ShoppingSummary } from "./shopping.types";
 
@@ -37,17 +38,48 @@ export class ShoppingService {
     const pendingItems = rows.filter((item) => item.status === "pending").length;
     const purchasedItems = totalItems - pendingItems;
     const estimatedTotal = rows.reduce((total, item) => total + (item.estimatedPrice ?? 0), 0);
+    const purchasedTotal = rows.reduce(
+      (total, item) => total + (item.status === "purchased" ? (item.totalPrice ?? item.estimatedPrice ?? 0) : 0),
+      0
+    );
 
-    return { totalItems, pendingItems, purchasedItems, estimatedTotal };
+    return { totalItems, pendingItems, purchasedItems, estimatedTotal, purchasedTotal };
   }
 
   async create(userId: string, payload: Omit<ShoppingItem, "id">) {
     const item = normalizeShoppingItem(createId("shop"), payload);
-    const [row] = await this.db
-      .insert(shoppingItems)
-      .values({ ...toShoppingItemValues(item), userId })
-      .returning();
-    return shoppingItemFromRow(row);
+    return this.db.transaction(async (tx) => {
+      const [row] = await tx
+        .insert(shoppingItems)
+        .values({ ...toShoppingItemValues(item), userId })
+        .returning();
+
+      if (item.status !== "purchased" || this.getPaidAmount(item) <= 0) {
+        return shoppingItemFromRow(row);
+      }
+
+      const expense = normalizeExpense(createId("expense"), {
+        date: item.purchaseDate ?? todayDate(),
+        itemName: item.name,
+        category: item.category ?? "Shopping",
+        amount: this.getPaidAmount(item),
+        quantity: item.quantity,
+        unit: item.unit,
+        paymentMethod: item.paymentMethod,
+        note: this.shoppingExpenseNote(item),
+        sourceType: "manual",
+      });
+      const [expenseRow] = await tx
+        .insert(expenses)
+        .values({ ...toExpenseValues(expense), userId })
+        .returning();
+      const [updatedRow] = await tx
+        .update(shoppingItems)
+        .set({ expenseId: expenseRow.id, updatedAt: new Date() })
+        .where(eq(shoppingItems.id, row.id))
+        .returning();
+      return shoppingItemFromRow(updatedRow);
+    });
   }
 
   async update(userId: string, shoppingItemId: string, payload: Partial<ShoppingItem>) {
@@ -60,20 +92,65 @@ export class ShoppingService {
       id: current.id,
       name: current.name,
       category: current.category ?? undefined,
+      subCategory: current.subCategory ?? undefined,
+      brand: current.brand ?? undefined,
+      model: current.model ?? undefined,
+      storeName: current.storeName ?? undefined,
       quantity: current.quantity ?? undefined,
       unit: current.unit ?? undefined,
       estimatedPrice: current.estimatedPrice ?? undefined,
+      productPrice: current.productPrice ?? undefined,
+      totalPrice: current.totalPrice ?? undefined,
+      purchaseDate: current.purchaseDate ?? undefined,
+      paymentMethod: current.paymentMethod ?? undefined,
+      receiptDocuments: (current.receiptDocuments as ShoppingItem["receiptDocuments"]) ?? [],
+      warrantyStatus: current.warrantyStatus as ShoppingItem["warrantyStatus"],
+      warrantyExpiresAt: current.warrantyExpiresAt ?? undefined,
+      warrantyNote: current.warrantyNote ?? undefined,
+      warrantyDocuments: (current.warrantyDocuments as ShoppingItem["warrantyDocuments"]) ?? [],
+      expenseId: current.expenseId ?? undefined,
       status: current.status,
       note: current.note ?? undefined,
       purchasedAt: current.purchasedAt?.toISOString(),
       ...payload,
     });
-    const [row] = await this.db
-      .update(shoppingItems)
-      .set(toShoppingItemValues(item))
-      .where(and(eq(shoppingItems.id, shoppingItemId), eq(shoppingItems.userId, userId)))
-      .returning();
-    return shoppingItemFromRow(row);
+    return this.db.transaction(async (tx) => {
+      let expenseId = item.expenseId;
+      const paidAmount = this.getPaidAmount(item);
+
+      if (item.status === "purchased" && paidAmount > 0) {
+        const expense = normalizeExpense(expenseId ?? createId("expense"), {
+          date: item.purchaseDate ?? todayDate(),
+          itemName: item.name,
+          category: item.category ?? "Shopping",
+          amount: paidAmount,
+          quantity: item.quantity,
+          unit: item.unit,
+          paymentMethod: item.paymentMethod,
+          note: this.shoppingExpenseNote(item),
+          sourceType: "manual",
+        });
+        if (expenseId) {
+          await tx
+            .update(expenses)
+            .set(toExpenseValues(expense))
+            .where(and(eq(expenses.id, expenseId), eq(expenses.userId, userId)));
+        } else {
+          const [expenseRow] = await tx
+            .insert(expenses)
+            .values({ ...toExpenseValues(expense), userId })
+            .returning();
+          expenseId = expenseRow.id;
+        }
+      }
+
+      const [row] = await tx
+        .update(shoppingItems)
+        .set(toShoppingItemValues({ ...item, expenseId }))
+        .where(and(eq(shoppingItems.id, shoppingItemId), eq(shoppingItems.userId, userId)))
+        .returning();
+      return shoppingItemFromRow(row);
+    });
   }
 
   markPurchased(userId: string, shoppingItemId: string) {
@@ -81,6 +158,19 @@ export class ShoppingService {
       status: "purchased",
       purchasedAt: new Date().toISOString(),
     });
+  }
+
+  private getPaidAmount(item: ShoppingItem) {
+    return item.totalPrice ?? item.estimatedPrice ?? 0;
+  }
+
+  private shoppingExpenseNote(item: ShoppingItem) {
+    const details = [
+      item.subCategory && `Subcategory: ${item.subCategory}`,
+      item.storeName && `Store: ${item.storeName}`,
+      item.brand && `Brand: ${item.brand}`,
+    ].filter(Boolean);
+    return details.join(" · ") || item.note;
   }
 
   async remove(userId: string, shoppingItemId: string) {

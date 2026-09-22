@@ -74,6 +74,7 @@ export class CategoriesService {
       categoryStatus: current.categoryStatus ?? undefined,
       note: current.note ?? undefined,
       extraNote: current.extraNote ?? undefined,
+      subcategories: current.subcategories ?? [],
       color: current.color,
       isActive: current.isActive,
       ...payload,

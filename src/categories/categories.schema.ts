@@ -1,6 +1,7 @@
 import {
   boolean,
   doublePrecision,
+  jsonb,
   pgEnum,
   pgTable,
   text,
@@ -30,6 +31,7 @@ export const budgetCategories = pgTable("budget_categories", {
   categoryStatus: budgetCategoryStatus("category_status"),
   note: text("note"),
   extraNote: text("extra_note"),
+  subcategories: jsonb("subcategories").$type<string[]>().default([]).notNull(),
   color: text("color").notNull(),
   isActive: boolean("is_active").default(true).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
