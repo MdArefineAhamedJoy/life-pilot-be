@@ -6,6 +6,7 @@ export * from "../budgets/budgets.schema";
 export * from "../categories/categories.schema";
 export * from "../expenses/expenses.schema";
 export * from "../notes/notes.schema";
+export * from "../meals/meals.schema";
 export * from "../settings/settings.schema";
 export * from "../shopping/shopping.schema";
 export * from "../tasks/tasks.schema";

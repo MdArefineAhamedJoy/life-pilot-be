@@ -12,6 +12,7 @@ import { EmailModule } from "./email/email.module";
 import { ExpensesModule } from "./expenses/expenses.module";
 import { HealthModule } from "./health/health.module";
 import { LifeOsStateModule } from "./life-os-state/life-os-state.module";
+import { MealsModule } from "./meals/meals.module";
 import { NotesModule } from "./notes/notes.module";
 import { SettingsModule } from "./settings/settings.module";
 import { ShoppingModule } from "./shopping/shopping.module";
@@ -38,6 +39,7 @@ import { ApiResponseInterceptor } from "./shared/api-response.interceptor";
     AuthModule,
     AccountsModule,
     LifeOsStateModule,
+    MealsModule,
     BudgetsModule,
     CategoriesModule,
     ExpensesModule,
